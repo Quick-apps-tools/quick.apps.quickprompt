@@ -438,6 +438,23 @@
         animationFrame = requestAnimationFrame(Loop);
     }
 
+    function openOutputTab() {
+        const raw = normalizeText();
+        if (!raw) {
+            input.focus();
+            return;
+        }
+
+        // Open a second copy of QuickPrompter with the current lyrics encoded
+        // in the URL fragment, so the output tab works offline too.
+        const baseUrl = window.location.href.split("#")[0];
+        const outputUrl = baseUrl + "#output=" + encodeURIComponent(raw);
+        const outputTab = window.open(outputUrl, "_blank");
+        if (!outputTab) {
+            alert("QuickPrompter could not open the output tab. Please allow pop-ups for this file.");
+        }
+    }
+
     function buildPrompter() {
         const raw = input.value
             .replace(/\r\n/g, "\n")
@@ -775,7 +792,7 @@
         stopScrolling();
     });
 
-    goButton.addEventListener("click", buildPrompter);
+    goButton.addEventListener("click", openOutputTab);
     saveJpgButton.addEventListener("click", function (e) {
         e.preventDefault();
         e.stopPropagation();
@@ -793,9 +810,21 @@
     input.addEventListener("keydown", function (e) {
         if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
             e.preventDefault();
-            buildPrompter();
+            openOutputTab();
         }
     });
+
+    // If this tab was opened by GO, load the supplied lyrics and show output.
+    // The original Home tab remains available for editing or exporting JPG.
+    if (window.location.hash.startsWith("#output=")) {
+        try {
+            input.value = decodeURIComponent(window.location.hash.slice("#output=".length));
+            reloadForJpgSave();
+            buildPrompter();
+        } catch (error) {
+            console.error("Could not load QuickPrompter output text:", error);
+        }
+    }
 })();
 </script>
 
