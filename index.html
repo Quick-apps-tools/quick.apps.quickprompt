@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>QuickPrompter</title>
 
-<!-- unzipit library for on-demand HTTP Range fetches from the remote ZIP -->
+<!-- unzipit library for on-demand HTTP Range fetches from the remote ZIP archive -->
 <script src="https://unpkg.com/unzipit@latest/dist/unzipit.min.js"></script>
 
 <style>
@@ -49,13 +49,14 @@
     .main-container {
         display: flex;
         gap: 20px;
-        max-width: 950px;
+        max-width: 1040px;
         margin: 0 auto;
         justify-content: center;
     }
 
-    .instruction-box-half {
+    .instruction-box {
         flex: 1;
+        max-width: 505px;
         background: white;
         border: 1px solid #ddd;
     }
@@ -85,31 +86,9 @@
         font-size: 12px;
     }
 
-    .lyrics-input-wrap {
-        padding: 4px 8px 7px;
-    }
-
-    #lyricsInput {
-        display: block;
-        width: 100%;
-        height: 200px;
-        resize: vertical;
-        padding: 5px 7px;
-        border: 2px solid #9ec3ff;
-        outline: none;
-        background: white;
-        color: black;
-        font-family: Georgia, serif;
-        font-size: 10px;
-        line-height: 1.35;
-    }
-
-    #lyricsInput:focus {
-        border-color: #176cf5;
-    }
-
+    /* Library Search Styles */
     .library-search-wrap {
-        padding: 4px 8px 7px;
+        padding: 6px 8px 2px;
         position: relative;
     }
 
@@ -118,13 +97,13 @@
         width: 100%;
         height: 30px;
         padding: 5px 8px;
-        border: 2px solid #9ec3ff;
+        border: 1px solid #9ec3ff;
+        border-radius: 3px;
         outline: none;
         background: white;
         color: black;
         font-family: Arial, sans-serif;
         font-size: 11px;
-        cursor: text;
     }
 
     #librarySearchInput:focus {
@@ -136,7 +115,7 @@
         position: absolute;
         left: 8px;
         right: 8px;
-        top: 37px;
+        top: 38px;
         max-height: 180px;
         overflow-y: auto;
         background: white;
@@ -163,11 +142,34 @@
         font-weight: bold;
     }
 
-    .go-wrap {
-        padding: 0 8px 8px;
+    .lyrics-input-wrap {
+        padding: 4px 8px 7px;
     }
 
-    #goButton, #searchGoButton {
+    #lyricsInput {
+        display: block;
+        width: 100%;
+        height: 280px;
+        resize: vertical;
+        padding: 5px 7px;
+        border: 2px solid #9ec3ff;
+        outline: none;
+        background: white;
+        color: black;
+        font-family: Georgia, serif;
+        font-size: 10px;
+        line-height: 1.35;
+    }
+
+    #lyricsInput:focus {
+        border-color: #176cf5;
+    }
+
+    .go-wrap {
+        padding: 0 1px 2px;
+    }
+
+    #goButton {
         width: 100%;
         height: 29px;
         border: 0;
@@ -180,7 +182,7 @@
         cursor: pointer;
     }
 
-    #goButton:hover, #searchGoButton:hover:not(:disabled) {
+    #goButton:hover {
         background: #0d5fe2;
     }
 
@@ -263,18 +265,18 @@
        SAVE JPG — HOME PAGE ONLY
        ========================= */
     .save-jpg-home-wrap {
-        margin-top: 10px;
+        margin-top: 12px;
         text-align: center;
     }
 
     #saveJpgButton {
-        height: 30px;
+        height: 34px;
         padding: 0 16px;
         border: 0;
         border-radius: 4px;
         color: #fff;
         font-family: Arial, sans-serif;
-        font-size: 11px;
+        font-size: 12px;
         font-weight: bold;
         cursor: pointer;
         transition: background 0.15s ease, opacity 0.15s ease;
@@ -346,9 +348,9 @@
 
     <div class="main-container">
         
-        <!-- LEFT BOX: MANUAL TEXT PROMPT & JPG EXPORT -->
-        <div class="instruction-box-half">
-            <div class="instruction-title">Manual Prompt</div>
+        <!-- LEFT: ORIGINAL QUICK PROMPT -->
+        <div class="instruction-box">
+            <div class="instruction-title">How to use</div>
 
             <div class="instruction-note">
                 Make sure you post plain text for best result
@@ -363,7 +365,7 @@
             </div>
 
             <div class="lyrics-input-wrap">
-                <textarea id="lyricsInput" spellcheck="false" placeholder="Paste custom lyrics here..."></textarea>
+                <textarea id="lyricsInput" spellcheck="false" placeholder=""></textarea>
             </div>
 
             <div class="go-wrap">
@@ -375,12 +377,12 @@
             </div>
         </div>
 
-        <!-- RIGHT BOX: LIBRARY SEARCH (.WEBP ARCHIVE) -->
-        <div class="instruction-box-half">
+        <!-- RIGHT: LIBRARY SEARCH -->
+        <div class="instruction-box">
             <div class="instruction-title">Library Search</div>
 
             <div class="instruction-note">
-                Search from your .webp archive instantly
+                Search & view .webp archive instantly
             </div>
 
             <div class="instruction-step">
@@ -388,20 +390,16 @@
             </div>
 
             <div class="instruction-step">
-                <strong>2. CLICK</strong> GO to open archive prompter.
+                <strong>2. CLICK</strong> a result to open in prompter.
             </div>
 
-            <div class="library-search-wrap" style="margin-top: 4px;">
-                <input type="text" id="librarySearchInput" spellcheck="false" placeholder="🔍 Search song title...">
+            <div class="library-search-wrap">
+                <input type="text" id="librarySearchInput" spellcheck="false" placeholder="🔍 Search library song title...">
                 <ul id="searchResultsList"></ul>
             </div>
 
-            <div class="instruction-step" style="font-size: 11px; color: #555; text-align: center; margin-top: 10px;">
-                Selected: <br><strong id="selectedSongLabel" style="color: #176cf5;">None selected</strong>
-            </div>
-
-            <div class="go-wrap" style="margin-top: 12px;">
-                <button id="searchGoButton" type="button" disabled style="background: #888; cursor: not-allowed;">GO (Library Song)</button>
+            <div class="instruction-step" style="font-size: 11px; color: #555; text-align: center; margin-top: 55px; border-bottom: none;">
+                Currently Displayed: <br><strong id="selectedSongLabel" style="color: #176cf5;">None</strong>
             </div>
         </div>
 
@@ -421,20 +419,18 @@
     const inputPage = document.getElementById("quickPrompt");
     const input = document.getElementById("lyricsInput");
     const goButton = document.getElementById("goButton");
-    const searchGoButton = document.getElementById("searchGoButton");
-    const selectedSongLabel = document.getElementById("selectedSongLabel");
     const prompter = document.getElementById("prompter");
     const lyrics = document.getElementById("lyrics");
     const saveJpgButton = document.getElementById("saveJpgButton");
     const searchInput = document.getElementById("librarySearchInput");
     const resultsList = document.getElementById("searchResultsList");
     const loadingOverlay = document.getElementById("loadingOverlay");
+    const selectedSongLabel = document.getElementById("selectedSongLabel");
 
     let songIndex = [];
-    let selectedFullPath = "";
     const ZIP_URL = 'https://github.com/Quick-apps-tools/quick.apps.quickprompt/releases/download/multilanguage/lyrics-tangingawit-multilang.zip';
 
-    // Load songs.json index
+    // Load songs.json index for search
     async function loadSongIndex() {
         try {
             const response = await fetch('./songs.json?v=' + Date.now());
@@ -467,15 +463,12 @@
             const cleanTitle = fullPath.split('/').pop().replace(/\.(webp|txt|png|jpg)$/i, '');
             const li = document.createElement("li");
             li.textContent = cleanTitle;
-            li.addEventListener("click", function() {
+            li.addEventListener("click", async function() {
                 searchInput.value = cleanTitle;
-                selectedFullPath = fullPath;
                 selectedSongLabel.textContent = cleanTitle;
                 resultsList.style.display = "none";
                 
-                searchGoButton.disabled = false;
-                searchGoButton.style.background = "#176cf5";
-                searchGoButton.style.cursor = "pointer";
+                await fetchAndDisplaySongImage(fullPath, cleanTitle);
             });
             resultsList.appendChild(li);
         });
@@ -483,13 +476,11 @@
         resultsList.style.display = "block";
     });
 
-    // Dedicated Library GO Button (On-Demand Range Fetch)
-    searchGoButton.addEventListener("click", async function() {
-        if (!selectedFullPath) return;
+    async function fetchAndDisplaySongImage(fullPath, title) {
         loadingOverlay.style.display = "flex";
         try {
             const { entries } = await unzipit.unzip(ZIP_URL);
-            const entry = entries[selectedFullPath];
+            const entry = entries[fullPath];
             
             if (!entry) {
                 alert("Song file not found in archive.");
@@ -499,7 +490,6 @@
 
             const blob = await entry.blob();
             const imageUrl = URL.createObjectURL(blob);
-            const cleanTitle = selectedFullPath.split('/').pop().replace(/\.(webp|txt|png|jpg)$/i, '');
 
             stopScrolling();
             lyrics.innerHTML = `
@@ -511,7 +501,7 @@
                     Press CTRL + B to return to the Home screen.<br>
                     Press ESC to return to the top.
                 </p>
-                <img src="${imageUrl}" alt="${cleanTitle}">
+                <img src="${imageUrl}" alt="${title}">
                 <p class="end-space">
                     CLICK CTRL + B TO RETURN TO THE HOME SCREEN
                 </p>
@@ -526,7 +516,7 @@
         } finally {
             loadingOverlay.style.display = "none";
         }
-    });
+    }
 
     document.addEventListener("click", function(e) {
         if (e.target !== searchInput && e.target !== resultsList) {
@@ -536,7 +526,8 @@
 
     loadSongIndex();
 
-    // SAVE JPG readiness
+    // SAVE JPG readiness. The button is gray while the latest text is
+    // being reloaded/prepared, then turns green when that exact text is ready.
     let preparedText = "";
     let prepareTimer = null;
 
@@ -568,6 +559,7 @@
         setSaveNotReady();
         clearTimeout(prepareTimer);
 
+        // Let the browser finish the textarea update/render first.
         prepareTimer = setTimeout(function () {
             requestAnimationFrame(function () {
                 const afterReload = normalizeText();
@@ -581,7 +573,7 @@
     }
 
     // ============================================================
-    // CONTROLS
+    // CONTROLS — based on the supplied anim.js
     // ============================================================
 
     let speed = 20;
@@ -590,9 +582,11 @@
     let animationFrame = null;
     let lastTime = 0;
     let fastScroll = false;
-    const arrowSpeed = 30;
-    let scrollMode = "none";
+    const arrowSpeed = 30; // Same base speed as number key 2 in anim.js.
+    let scrollMode = "none"; // "number", "arrow", or "none"
 
+    // Speed map from the supplied anim.js:
+    // Top row 1-9 and Numpad 1-9
     const speedMap = {
         97: 15,  98: 30,  99: 50, 100: 80, 101: 120,
         102: 250, 103: 320, 104: 400, 105: 500,
@@ -620,6 +614,14 @@
         const delta = Math.min(timestamp - lastTime, 50);
         lastTime = timestamp;
 
+        /*
+         * The supplied anim.js uses:
+         * distance = +/- 200000
+         * duration = abs(distance) / (speed * 5)
+         *
+         * That is equivalent to a continuous movement rate of
+         * speed * 5 pixels per second.
+         */
         const pixelsPerSecond = speed * 5 * (fastScroll ? 12 : 1);
         const movement = pixelsPerSecond * (delta / 1000);
         const signedMovement = (direction === 2) ? movement : -movement;
@@ -632,6 +634,7 @@
 
         lyrics.scrollTop = nextPosition;
 
+        // Stop automatically at either end.
         if (nextPosition <= 0 && direction === 1) {
             stopScrolling();
             return;
@@ -662,6 +665,8 @@
             return;
         }
 
+        // Open a second copy of QuickPrompter with the current lyrics encoded
+        // in the URL fragment, so the output tab works offline too.
         const baseUrl = window.location.href.split("#")[0];
         const outputUrl = baseUrl + "#output=" + encodeURIComponent(raw);
         const outputTab = window.open(outputUrl, "_blank");
@@ -682,6 +687,10 @@
             return;
         }
 
+        /*
+         * Blank-line-separated blocks become paragraphs,
+         * matching the supplied original HTML structure.
+         */
         const blocks = raw.split(/\n\s*\n+/);
 
         let output = `
@@ -725,12 +734,31 @@
             .replace(/'/g, "&#039;");
     }
 
+    // ============================================================
+    // SAVE FULL PROMPTER AS JPG
+    // Creates a long vertical image matching the blue/white
+    // prompter instead of saving only the visible viewport.
+    // ============================================================
+
     function savePrompterAsJPG() {
+        // SAVE JPG is only allowed after the latest textarea contents
+        // have finished reloading/preparing.
         const raw = normalizeText();
         if (!raw || saveJpgButton.disabled || preparedText !== raw) {
             return;
         }
 
+        /* =========================================================
+           JPG EXPORT — ALALAHANIN REFERENCE BASIS
+
+           Reference: 355px wide.
+           The logical font, spacing and proportions are fixed to the
+           supplied Alalahanin reference. ONLY THE HEIGHT changes with
+           the amount of lyrics.
+
+           A 4x render is used for a sharp JPG, while the logical
+           design remains exactly 355px wide.
+           ========================================================= */
         const exportWidth = 1280;
         const basisScale = exportWidth / 355;
         const fontSize = 24 * basisScale;
@@ -749,10 +777,13 @@
 
         const blocks = raw.split(/\n\s*\n+/);
 
+        // Fixed Georgia Bold — independent of webpage/window size.
         ctx.font = `bold ${fontSize}px Georgia, serif`;
         ctx.textAlign = "center";
         ctx.textBaseline = "top";
 
+        // Wrap only when a source line physically cannot fit.
+        // Existing user line breaks are always preserved.
         function wrapLine(line) {
             if (!line.trim()) return [""];
 
@@ -767,6 +798,9 @@
                     current = test;
                 } else {
                     if (current) wrapped.push(current);
+
+                    // If one word itself is wider than the text area,
+                    // keep the fixed font rather than shrinking it.
                     current = word;
                 }
             }
@@ -783,6 +817,7 @@
             return lines;
         });
 
+        // HEIGHT IS DYNAMIC: longer lyrics = taller JPG.
         let contentHeight = topPadding;
         for (const paragraph of paragraphs) {
             contentHeight += paragraph.length * lineHeight;
@@ -794,6 +829,7 @@
         const pixelWidth = exportWidth;
         const pixelHeight = Math.ceil(contentHeight);
 
+        // Keep a safe browser limit.
         if (pixelHeight > 32767) {
             alert("The lyrics are too long for one JPG in this browser. Please split them into two or more images.");
             return;
@@ -802,8 +838,10 @@
         canvas.width = pixelWidth;
         canvas.height = pixelHeight;
 
+        // Work directly in the fixed 1280px output coordinate system.
         ctx.setTransform(exportScale, 0, 0, exportScale, 0, 0);
 
+        // Same blue → white → blue background as the prompter/reference.
         const gradient = ctx.createLinearGradient(0, 0, exportWidth, 0);
         gradient.addColorStop(0, "#31b8ed");
         gradient.addColorStop(0.30, "#ddf1f9");
@@ -832,6 +870,7 @@
         }
 
         try {
+            // Maximum-quality JPG from the canvas.
             const jpgData = canvas.toDataURL("image/jpeg", 1.0);
             const link = document.createElement("a");
             const title = (raw.split(/\n/)[0] || "prompter")
@@ -852,7 +891,7 @@
     }
 
     // ============================================================
-    // KEYBOARD CONTROLS
+    // KEYBOARD CONTROLS — EXACT FUNCTIONALITY REQUESTED
     // ============================================================
 
     document.addEventListener("keydown", function (e) {
@@ -860,6 +899,7 @@
 
         const key = e.keyCode;
 
+        // CTRL + Arrow = 12x the current normal speed for a much faster manual jump.
         if (e.ctrlKey && (key === 38 || key === 40)) {
             e.preventDefault();
             fastScroll = true;
@@ -870,6 +910,7 @@
             return;
         }
 
+        // CTRL + B — return to the Home screen.
         if (e.ctrlKey && (key === 66 || e.key.toLowerCase() === "b")) {
             e.preventDefault();
             stopScrolling();
@@ -880,6 +921,8 @@
             return;
         }
 
+        // 1. STOP KEYS
+        // Space = 32, Enter = 13, Numpad 0 = 96, Top-row 0 = 48
         if (key === 32 || key === 13 || key === 96 || key === 48) {
             e.preventDefault();
             stopScrolling();
@@ -887,6 +930,7 @@
             return;
         }
 
+        // 2. SPEED KEYS — top row 1-9 + numpad 1-9
         if (speedMap[key]) {
             e.preventDefault();
             speed = speedMap[key];
@@ -894,13 +938,14 @@
             fastScroll = false;
 
             if (!isMoving) {
-                direction = 2;
+                direction = 2; // Start DOWN when currently stopped.
                 startScrolling();
             }
             return;
         }
 
-        if (key === 38) {
+        // 3. START / DIRECTION — Arrow keys
+        if (key === 38) { // Up — HOLD to scroll at independent arrow speed
             e.preventDefault();
             fastScroll = false;
             if (!e.repeat) {
@@ -912,7 +957,7 @@
             return;
         }
 
-        if (key === 40) {
+        if (key === 40) { // Down — STOP numbered scroll, or HOLD to manual-scroll down
             e.preventDefault();
             fastScroll = false;
             if (!e.repeat) {
@@ -930,6 +975,7 @@
         }
     });
 
+    // Arrow keys only scroll while physically held down.
     document.addEventListener("keyup", function (e) {
         if (prompter.style.display !== "block") return;
 
@@ -941,6 +987,7 @@
             return;
         }
 
+        // 4. ESC — reset to TOP
         if (e.keyCode === 27) {
             e.preventDefault();
             stopScrolling();
@@ -952,8 +999,9 @@
         }
     });
 
+    // Clicking the prompter stops movement.
     prompter.addEventListener("click", function (e) {
-        if (e.target === goButton || e.target === searchGoButton) return;
+        if (e.target === goButton) return;
         stopScrolling();
     });
 
@@ -964,7 +1012,10 @@
         savePrompterAsJPG();
     });
 
+    // Any paste, typing, deletion, or other change makes SAVE JPG gray.
     input.addEventListener("input", reloadForJpgSave);
+
+    // Initial state: gray until there is text and it has been prepared.
     reloadForJpgSave();
 
     input.addEventListener("keydown", function (e) {
@@ -974,6 +1025,7 @@
         }
     });
 
+    // If this tab was opened by GO, load the supplied lyrics and show output.
     if (window.location.hash.startsWith("#output=")) {
         try {
             input.value = decodeURIComponent(window.location.hash.slice("#output=".length));
