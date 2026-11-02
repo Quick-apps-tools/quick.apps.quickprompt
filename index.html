@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>QuickPrompter</title>
 
+<!-- JSZip Library for reading the 761MB multi-language archive -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
 <style>
     * {
         box-sizing: border-box;
@@ -74,6 +77,59 @@
         padding: 7px 9px;
         border-bottom: 1px solid #ddd;
         font-size: 12px;
+    }
+
+    /* LIBRARY SEARCH FIELD */
+    .library-search-wrap {
+        padding: 6px 8px 2px;
+        position: relative;
+    }
+
+    #librarySearchInput {
+        width: 100%;
+        height: 30px;
+        padding: 5px 8px;
+        border: 1px solid #9ec3ff;
+        border-radius: 3px;
+        outline: none;
+        font-family: Arial, sans-serif;
+        font-size: 11px;
+    }
+
+    #librarySearchInput:focus {
+        border-color: #176cf5;
+    }
+
+    #searchResultsList {
+        display: none;
+        position: absolute;
+        left: 8px;
+        right: 8px;
+        top: 38px;
+        max-height: 180px;
+        overflow-y: auto;
+        background: white;
+        border: 1px solid #176cf5;
+        border-radius: 0 0 4px 4px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+        z-index: 100;
+        list-style: none;
+        margin: 0;
+        padding: 0;
+    }
+
+    #searchResultsList li {
+        padding: 6px 10px;
+        font-family: Arial, sans-serif;
+        font-size: 11px;
+        cursor: pointer;
+        border-bottom: 1px solid #eee;
+    }
+
+    #searchResultsList li:hover {
+        background: #eaf2ff;
+        color: #176cf5;
+        font-weight: bold;
     }
 
     .lyrics-input-wrap {
@@ -268,11 +324,17 @@
         </div>
 
         <div class="instruction-step">
-            <strong>1. PASTE</strong> your lyrics or block of text below.
+            <strong>1. SEARCH</strong> or paste lyrics below.
         </div>
 
         <div class="instruction-step">
             <strong>2. CLICK</strong> GO to open the blue prompter.
+        </div>
+
+        <!-- SEARCH BAR FOR ZIP SONGS -->
+        <div class="library-search-wrap">
+            <input type="text" id="librarySearchInput" placeholder="🔍 Search library song title..." disabled>
+            <ul id="searchResultsList"></ul>
         </div>
 
         <div class="lyrics-input-wrap">
@@ -305,9 +367,101 @@
     const prompter = document.getElementById("prompter");
     const lyrics = document.getElementById("lyrics");
     const saveJpgButton = document.getElementById("saveJpgButton");
+    const searchInput = document.getElementById("librarySearchInput");
+    const resultsList = document.getElementById("searchResultsList");
 
-    // SAVE JPG readiness. The button is gray while the latest text is
-    // being reloaded/prepared, then turns green when that exact text is ready.
+    // ============================================================
+    // BACKGROUND LIBRARY ARCHIVE LOADER (JSZip)
+    // Uses your uploaded GitHub release: lyrics-tangingawit-multilang.zip
+    // ============================================================
+    const ZIP_URL = 'https://github.com/Quick-apps-tools/quick.apps.quickprompt/releases/download/multilanguage/lyrics-tangingawit-multilang.zip';
+    let zipDataCache = null;
+    let availableSongs = [];
+
+    async function loadLibraryArchive() {
+        if (zipDataCache) return zipDataCache;
+        try {
+            console.log("Loading multi-language library archive in background...");
+            const response = await fetch(ZIP_URL);
+            if (!response.ok) throw new Error("Network response was not ok");
+            const blob = await response.blob();
+            
+            const zip = new JSZip();
+            zipDataCache = await zip.loadAsync(blob);
+            console.log("Multi-language library archive loaded successfully!");
+            
+            // Build searchable list from zip filenames
+            indexZipFiles();
+            return zipDataCache;
+        } catch (error) {
+            console.error("Failed to load library archive:", error);
+            return null;
+        }
+    }
+
+    function indexZipFiles() {
+        if (!zipDataCache) return;
+        availableSongs = [];
+        
+        Object.keys(zipDataCache.files).forEach(filename => {
+            // Strip extensions like .webp, .txt, etc.
+            const cleanTitle = filename.replace(/\.(webp|txt|png|jpg)$/i, '').split('/').pop();
+            if (cleanTitle && !zipDataCache.files[filename].dir) {
+                availableSongs.push({
+                    fullPath: filename,
+                    title: cleanTitle
+                });
+            }
+        });
+
+        // Enable search input once zip is indexed
+        searchInput.disabled = false;
+        searchInput.placeholder = "🔍 Search song title (e.g. Ang Samo, Abba Ama)...";
+    }
+
+    // SEARCH INPUT EVENT LISTENER
+    searchInput.addEventListener("input", function() {
+        const query = this.value.trim().toLowerCase();
+        resultsList.innerHTML = "";
+        
+        if (!query) {
+            resultsList.style.display = "none";
+            return;
+        }
+
+        const matches = availableSongs.filter(s => s.title.toLowerCase().includes(query)).slice(0, 10);
+        
+        if (matches.length === 0) {
+            resultsList.style.display = "none";
+            return;
+        }
+
+        matches.forEach(song => {
+            const li = document.createElement("li");
+            li.textContent = song.title;
+            li.addEventListener("click", function() {
+                input.value = song.title;
+                searchInput.value = song.title;
+                resultsList.style.display = "none";
+                reloadForJpgSave();
+            });
+            resultsList.appendChild(li);
+        });
+
+        resultsList.style.display = "block";
+    });
+
+    // Hide dropdown when clicking outside
+    document.addEventListener("click", function(e) {
+        if (e.target !== searchInput && e.target !== resultsList) {
+            resultsList.style.display = "none";
+        }
+    });
+
+    // Kick off background loading quietly
+    loadLibraryArchive();
+
+    // SAVE JPG readiness.
     let preparedText = "";
     let prepareTimer = null;
 
@@ -339,7 +493,6 @@
         setSaveNotReady();
         clearTimeout(prepareTimer);
 
-        // Let the browser finish the textarea update/render first.
         prepareTimer = setTimeout(function () {
             requestAnimationFrame(function () {
                 const afterReload = normalizeText();
@@ -352,21 +505,16 @@
         }, 180);
     }
 
-    // ============================================================
-    // CONTROLS — based on the supplied anim.js
-    // ============================================================
-
+    // CONTROLS — anim.js
     let speed = 20;
     let direction = 2; // 1 = UP, 2 = DOWN
     let isMoving = false;
     let animationFrame = null;
     let lastTime = 0;
     let fastScroll = false;
-    const arrowSpeed = 30; // Same base speed as number key 2 in anim.js.
-    let scrollMode = "none"; // "number", "arrow", or "none"
+    const arrowSpeed = 30;
+    let scrollMode = "none";
 
-    // Speed map from the supplied anim.js:
-    // Top row 1-9 and Numpad 1-9
     const speedMap = {
         97: 15,  98: 30,  99: 50, 100: 80, 101: 120,
         102: 250, 103: 320, 104: 400, 105: 500,
@@ -394,14 +542,6 @@
         const delta = Math.min(timestamp - lastTime, 50);
         lastTime = timestamp;
 
-        /*
-         * The supplied anim.js uses:
-         * distance = +/- 200000
-         * duration = abs(distance) / (speed * 5)
-         *
-         * That is equivalent to a continuous movement rate of
-         * speed * 5 pixels per second.
-         */
         const pixelsPerSecond = speed * 5 * (fastScroll ? 12 : 1);
         const movement = pixelsPerSecond * (delta / 1000);
         const signedMovement = (direction === 2) ? movement : -movement;
@@ -414,7 +554,6 @@
 
         lyrics.scrollTop = nextPosition;
 
-        // Stop automatically at either end.
         if (nextPosition <= 0 && direction === 1) {
             stopScrolling();
             return;
@@ -445,8 +584,6 @@
             return;
         }
 
-        // Open a second copy of QuickPrompter with the current lyrics encoded
-        // in the URL fragment, so the output tab works offline too.
         const baseUrl = window.location.href.split("#")[0];
         const outputUrl = baseUrl + "#output=" + encodeURIComponent(raw);
         const outputTab = window.open(outputUrl, "_blank");
@@ -467,10 +604,6 @@
             return;
         }
 
-        /*
-         * Blank-line-separated blocks become paragraphs,
-         * matching the supplied original HTML structure.
-         */
         const blocks = raw.split(/\n\s*\n+/);
 
         let output = `
@@ -514,31 +647,12 @@
             .replace(/'/g, "&#039;");
     }
 
-    // ============================================================
-    // SAVE FULL PROMPTER AS JPG
-    // Creates a long vertical image matching the blue/white
-    // prompter instead of saving only the visible viewport.
-    // ============================================================
-
     function savePrompterAsJPG() {
-        // SAVE JPG is only allowed after the latest textarea contents
-        // have finished reloading/preparing.
         const raw = normalizeText();
         if (!raw || saveJpgButton.disabled || preparedText !== raw) {
             return;
         }
 
-        /* =========================================================
-           JPG EXPORT — ALALAHANIN REFERENCE BASIS
-
-           Reference: 355px wide.
-           The logical font, spacing and proportions are fixed to the
-           supplied Alalahanin reference. ONLY THE HEIGHT changes with
-           the amount of lyrics.
-
-           A 4x render is used for a sharp JPG, while the logical
-           design remains exactly 355px wide.
-           ========================================================= */
         const exportWidth = 1280;
         const basisScale = exportWidth / 355;
         const fontSize = 24 * basisScale;
@@ -557,13 +671,10 @@
 
         const blocks = raw.split(/\n\s*\n+/);
 
-        // Fixed Georgia Bold — independent of webpage/window size.
         ctx.font = `bold ${fontSize}px Georgia, serif`;
         ctx.textAlign = "center";
         ctx.textBaseline = "top";
 
-        // Wrap only when a source line physically cannot fit.
-        // Existing user line breaks are always preserved.
         function wrapLine(line) {
             if (!line.trim()) return [""];
 
@@ -578,9 +689,6 @@
                     current = test;
                 } else {
                     if (current) wrapped.push(current);
-
-                    // If one word itself is wider than the text area,
-                    // keep the fixed font rather than shrinking it.
                     current = word;
                 }
             }
@@ -597,7 +705,6 @@
             return lines;
         });
 
-        // HEIGHT IS DYNAMIC: longer lyrics = taller JPG.
         let contentHeight = topPadding;
         for (const paragraph of paragraphs) {
             contentHeight += paragraph.length * lineHeight;
@@ -609,7 +716,6 @@
         const pixelWidth = exportWidth;
         const pixelHeight = Math.ceil(contentHeight);
 
-        // Keep a safe browser limit.
         if (pixelHeight > 32767) {
             alert("The lyrics are too long for one JPG in this browser. Please split them into two or more images.");
             return;
@@ -618,10 +724,8 @@
         canvas.width = pixelWidth;
         canvas.height = pixelHeight;
 
-        // Work directly in the fixed 1280px output coordinate system.
         ctx.setTransform(exportScale, 0, 0, exportScale, 0, 0);
 
-        // Same blue → white → blue background as the prompter/reference.
         const gradient = ctx.createLinearGradient(0, 0, exportWidth, 0);
         gradient.addColorStop(0, "#31b8ed");
         gradient.addColorStop(0.30, "#ddf1f9");
@@ -650,7 +754,6 @@
         }
 
         try {
-            // Maximum-quality JPG from the 4x canvas.
             const jpgData = canvas.toDataURL("image/jpeg", 1.0);
             const link = document.createElement("a");
             const title = (raw.split(/\n/)[0] || "prompter")
@@ -670,17 +773,12 @@
         }
     }
 
-    // ============================================================
-    // KEYBOARD CONTROLS — EXACT FUNCTIONALITY REQUESTED
-    // ============================================================
-
+    // KEYBOARD CONTROLS
     document.addEventListener("keydown", function (e) {
         if (prompter.style.display !== "block") return;
 
         const key = e.keyCode;
 
-        // CTRL + Arrow = 12x the current normal speed for a much faster manual jump.
-        // Keep the same animation running so there is no jump/jiggle.
         if (e.ctrlKey && (key === 38 || key === 40)) {
             e.preventDefault();
             fastScroll = true;
@@ -691,7 +789,6 @@
             return;
         }
 
-        // CTRL + B — return to the Home screen.
         if (e.ctrlKey && (key === 66 || e.key.toLowerCase() === "b")) {
             e.preventDefault();
             stopScrolling();
@@ -702,8 +799,6 @@
             return;
         }
 
-        // 1. STOP KEYS
-        // Space = 32, Enter = 13, Numpad 0 = 96, Top-row 0 = 48
         if (key === 32 || key === 13 || key === 96 || key === 48) {
             e.preventDefault();
             stopScrolling();
@@ -711,26 +806,20 @@
             return;
         }
 
-        // 2. SPEED KEYS — top row 1-9 + numpad 1-9
-        // Change speed WITHOUT restarting the animation. Restarting the
-        // loop can cause a tiny visible jump/jiggle while the text is moving.
         if (speedMap[key]) {
             e.preventDefault();
             speed = speedMap[key];
             scrollMode = "number";
             fastScroll = false;
 
-            // If already scrolling, keep the current direction and the
-            // existing animation frame perfectly continuous.
             if (!isMoving) {
-                direction = 2; // Start DOWN when currently stopped.
+                direction = 2;
                 startScrolling();
             }
             return;
         }
 
-        // 3. START / DIRECTION — Arrow keys
-        if (key === 38) { // Up — HOLD to scroll at independent arrow speed
+        if (key === 38) {
             e.preventDefault();
             fastScroll = false;
             if (!e.repeat) {
@@ -742,12 +831,10 @@
             return;
         }
 
-        if (key === 40) { // Down — STOP numbered scroll, or HOLD to manual-scroll down
+        if (key === 40) {
             e.preventDefault();
             fastScroll = false;
             if (!e.repeat) {
-                // If a number-key scroll is currently running, Arrow Down acts as STOP.
-                // Otherwise it starts independent manual scrolling at speed 2.
                 if (isMoving && scrollMode === "number") {
                     stopScrolling();
                     scrollMode = "none";
@@ -762,7 +849,6 @@
         }
     });
 
-    // Arrow keys only scroll while physically held down.
     document.addEventListener("keyup", function (e) {
         if (prompter.style.display !== "block") return;
 
@@ -774,7 +860,6 @@
             return;
         }
 
-        // 4. ESC — reset to TOP
         if (e.keyCode === 27) {
             e.preventDefault();
             stopScrolling();
@@ -786,7 +871,6 @@
         }
     });
 
-    // Clicking the prompter stops movement, matching anim.js.
     prompter.addEventListener("click", function (e) {
         if (e.target === goButton) return;
         stopScrolling();
@@ -799,12 +883,7 @@
         savePrompterAsJPG();
     });
 
-    // Any paste, typing, deletion, or other change makes SAVE JPG gray.
-    // The prompter/export state is then reloaded; once the latest text is
-    // confirmed ready, SAVE JPG turns green and becomes clickable.
     input.addEventListener("input", reloadForJpgSave);
-
-    // Initial state: gray until there is text and it has been prepared.
     reloadForJpgSave();
 
     input.addEventListener("keydown", function (e) {
@@ -814,8 +893,6 @@
         }
     });
 
-    // If this tab was opened by GO, load the supplied lyrics and show output.
-    // The original Home tab remains available for editing or exporting JPG.
     if (window.location.hash.startsWith("#output=")) {
         try {
             input.value = decodeURIComponent(window.location.hash.slice("#output=".length));
@@ -827,7 +904,5 @@
     }
 })();
 </script>
-
-
 
 </body></html>
