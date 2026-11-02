@@ -145,7 +145,7 @@
             <strong>2. CLICK</strong> GO to open the blue prompter.
         </div>
 
-        <!-- SEARCH BAR (No disabled attribute, fully clickable immediately) -->
+        <!-- SEARCH BAR -->
         <div class="library-search-wrap">
             <input type="text" id="librarySearchInput" placeholder="🔍 Loading search index...">
             <ul id="searchResultsList"></ul>
@@ -214,6 +214,7 @@
         }
 
         matches.forEach(filename => {
+            // Extracts just the filename and strips extension, hiding folder paths
             const cleanTitle = filename.split('/').pop().replace(/\.(webp|txt|png|jpg)$/i, '');
             const li = document.createElement("li");
             li.textContent = cleanTitle;
