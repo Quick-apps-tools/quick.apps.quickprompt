@@ -408,50 +408,43 @@
     const resultsList = document.getElementById("searchResultsList");
     const selectedSongLabel = document.getElementById("selectedSongLabel");
 
-let songIndex = [];
-let zipContents = null; // Store this globally so we can read files later when clicked
+    let songIndex = [];
+    let zipContents = null;
 
-async function loadSongIndex() {
-    try {
-        searchInput.placeholder = "⏳ Downloading and indexing library...";
-        
-        const githubReleaseUrl = "https://github.com/Quick-apps-tools/quick.apps.quickprompt/releases/download/v1.0/lyrics-tangingawit-multilang.zip";
-        const proxyUrl = "https://quickappsquickprompt.espinolajhonsimon11.workers.dev/?url=" + encodeURIComponent(githubReleaseUrl);
-        
-        const response = await fetch(proxyUrl);
-        if (!response.ok) throw new Error("HTTP error " + response.status);
-        
-        // Convert the downloaded file into a blob and load it into JSZip
-        const blob = await response.blob();
-        const zip = new JSZip();
-        zipContents = await zip.loadAsync(blob);
-        
-        songIndex = [];
-        // Loop through every file inside your ZIP folder
-        zipContents.forEach((relativePath, zipEntry) => {
-            if (!zipEntry.dir) {
-                // Get the file name without extension to use as the title
-                const fileName = relativePath.split('/').pop();
-                const title = fileName.replace(/\.[^/.]+$/, "");
-                
-                songIndex.push({
-                    title: title,
-                    path: relativePath
-                });
-            }
-        });
+    async function loadSongIndex() {
+        try {
+            searchInput.placeholder = "⏳ Downloading and indexing library...";
+            
+            const githubReleaseUrl = "https://github.com/Quick-apps-tools/quick.apps.quickprompt/releases/download/v1.0/lyrics-tangingawit-multilang.zip";
+            const proxyUrl = "https://quickappsquickprompt.espinolajhonsimon11.workers.dev/?url=" + encodeURIComponent(githubReleaseUrl);
+            
+            const response = await fetch(proxyUrl);
+            if (!response.ok) throw new Error("HTTP error " + response.status);
+            
+            const blob = await response.blob();
+            const zip = new JSZip();
+            zipContents = await zip.loadAsync(blob);
+            
+            songIndex = [];
+            zipContents.forEach((relativePath, zipEntry) => {
+                if (!zipEntry.dir) {
+                    songIndex.push({
+                        title: relativePath.split('/').pop().replace(/\.[^/.]+$/, ""),
+                        path: relativePath
+                    });
+                }
+            });
 
-        searchInput.placeholder = `🔍 Search ${songIndex.length} songs (e.g. 365)...`;
-        console.log("Successfully indexed " + songIndex.length + " files!");
-        
-    } catch (err) {
-        console.error("Index load error:", err);
-        searchInput.placeholder = "Search index loading failed...";
+            searchInput.placeholder = `🔍 Search ${songIndex.length} songs (e.g. 365)...`;
+            console.log("Successfully indexed " + songIndex.length + " files from ZIP!");
+            
+        } catch (err) {
+            console.error("Index load error:", err);
+            searchInput.placeholder = "Search index loading failed...";
+        }
     }
-}
 
-// Run the function when the page opens
-loadSongIndex();
+    loadSongIndex();
 
     searchInput.addEventListener("input", function() {
         const query = this.value.trim().toLowerCase();
@@ -462,37 +455,43 @@ loadSongIndex();
             return;
         }
 
-        const matches = songIndex.filter(song => song.toLowerCase().includes(query)).slice(0, 10);
+        const matches = songIndex.filter(song => song.title.toLowerCase().includes(query)).slice(0, 10);
         
         if (matches.length === 0) {
             resultsList.style.display = "none";
             return;
         }
 
-        matches.forEach(fullPath => {
-            const cleanTitle = fullPath.split('/').pop().replace(/\.(webp|txt|png|jpg)$/i, '');
+        matches.forEach(match => {
             const li = document.createElement("li");
-            li.textContent = cleanTitle;
-            li.addEventListener("click", function() {
-                searchInput.value = cleanTitle;
-                selectedSongLabel.textContent = cleanTitle;
+            li.textContent = match.title;
+            li.addEventListener("click", async function() {
+                searchInput.value = match.title;
+                selectedSongLabel.textContent = match.title;
                 resultsList.style.display = "none";
                 
-                const imageUrl = '/' + fullPath.replace(/^\.\//, '');
-                stopScrolling();
-                lyrics.innerHTML = `
-                    <div style="padding: 20px 0; text-align: center;">
-                        <p class="help" style="font-size: 14px; color: #053d54; margin-bottom: 20px;">
-                            Press <strong>CTRL + B</strong> to return to Home.
-                        </p>
-                        <img src="${imageUrl}" alt="${cleanTitle}" style="max-width: 90%; height: auto; display: block; margin: 0 auto; box-shadow: 0 10px 25px rgba(0,0,0,0.3);">
-                        <p class="end-space" style="margin-top: 40px; font-size: 14px;">END OF SONG</p>
-                    </div>
-                `;
+                try {
+                    const fileData = await zipContents.files[match.path].async("blob");
+                    const fileBlobUrl = URL.createObjectURL(fileData);
 
-                inputPage.style.display = "none";
-                prompter.style.display = "block";
-                lyrics.scrollTop = 0;
+                    stopScrolling();
+                    lyrics.innerHTML = `
+                        <div style="padding: 20px 0; text-align: center;">
+                            <p class="help" style="font-size: 14px; color: #053d54; margin-bottom: 20px;">
+                                Press <strong>CTRL + B</strong> to return to Home.
+                            </p>
+                            <img src="${fileBlobUrl}" alt="${match.title}" style="max-width: 90%; height: auto; display: block; margin: 0 auto; box-shadow: 0 10px 25px rgba(0,0,0,0.3);">
+                            <p class="end-space" style="margin-top: 40px; font-size: 14px;">END OF SONG</p>
+                        </div>
+                    `;
+
+                    inputPage.style.display = "none";
+                    prompter.style.display = "block";
+                    lyrics.scrollTop = 0;
+                } catch (loadErr) {
+                    console.error("Failed to load file from ZIP:", loadErr);
+                    alert("Could not load song file from archive.");
+                }
             });
             resultsList.appendChild(li);
         });
@@ -505,8 +504,6 @@ loadSongIndex();
             resultsList.style.display = "none";
         }
     });
-
-    loadSongIndex();
 
     // SAVE JPG readiness
     let preparedText = "";
@@ -640,61 +637,6 @@ loadSongIndex();
         if (!outputTab) {
             alert("QuickPrompter could not open the output tab. Please allow pop-ups for this file.");
         }
-    }
-
-    function buildPrompter() {
-        const raw = input.value
-            .replace(/\r\n/g, "\n")
-            .replace(/\r/g, "\n")
-            .replace(/'/g, "’")
-            .trim();
-
-        if (!raw) {
-            input.focus();
-            return;
-        }
-
-        const blocks = raw.split(/\n\s*\n+/);
-
-        let output = `
-            <p class="help">
-                HOLD ARROW UP or DOWN to scroll manually.<br>
-                Press 1–9 to start/change automatic scroll speed.<br>
-                Press ARROW DOWN once to stop automatic scrolling.<br>
-                Press SPACE / ENTER / 0 to stop.<br>
-                Press CTRL + B to return to the Home screen.<br>
-                Press ESC to return to the top.
-            </p>
-        `;
-
-        for (const block of blocks) {
-            const lines = block.split("\n");
-            output += "<p>" +
-                lines.map(escapeHTML).join("<br>") +
-                "</p>";
-        }
-
-        output += `
-            <p class="end-space">
-                CLICK CTRL + B TO RETURN TO THE HOME SCREEN
-            </p>
-        `;
-
-        lyrics.innerHTML = output;
-
-        stopScrolling();
-        inputPage.style.display = "none";
-        prompter.style.display = "block";
-        lyrics.scrollTop = 0;
-    }
-
-    function escapeHTML(text) {
-        return text
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/"/g, "&quot;")
-            .replace(/'/g, "&#039;");
     }
 
     function savePrompterAsJPG() {
