@@ -258,6 +258,56 @@
         margin: 40em auto;
     }
 
+    #prompter.image-mode {
+        background: #000;
+    }
+
+    #prompter.image-mode .bg-gradient {
+        display: none;
+    }
+
+    #prompter.image-mode #lyrics {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        overflow: hidden;
+        font-size: initial;
+    }
+
+    #prompter.image-mode .image-view {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        padding: 0;
+    }
+
+    #prompter.image-mode .image-control {
+        position: absolute;
+        z-index: 2;
+        top: 12px;
+        left: 50%;
+        transform: translateX(-50%);
+        margin: 0;
+        padding: 8px 12px;
+        color: #fff;
+        background: rgba(0, 0, 0, 0.6);
+        font: bold 16px Georgia, serif;
+        white-space: nowrap;
+    }
+
+    #prompter.image-mode .full-song-image {
+        display: block;
+        width: 100%;
+        height: 100%;
+        max-width: none;
+        margin: 0;
+        object-fit: contain;
+        box-shadow: none;
+    }
     /* =========================
        SAVE JPG — HOME PAGE ONLY
        ========================= */
@@ -470,48 +520,39 @@
                         </div>
                     `;
                     inputPage.style.display = "none";
+                    prompter.classList.add("image-mode");
                     prompter.style.display = "block";
 
                     const { ZipReader, HttpReader, Uint8ArrayWriter } =
                         await import("https://cdn.jsdelivr.net/npm/@zip.js/zip.js@2.24.0/index.min.js");
-
                     const zipReader = new ZipReader(
                         new HttpReader(proxyUrl, { useRangeHeader: true, forceRangeRequests: true })
                     );
-
                     let imageData;
                     try {
                         const entries = await zipReader.getEntries();
                         const songEntry = entries.find(entry => entry.filename === filePath);
-
                         if (!songEntry) throw new Error("Song image was not found inside the ZIP: " + filePath);
                         imageData = await songEntry.getData(new Uint8ArrayWriter());
                     } finally {
                         await zipReader.close();
                     }
-
                     const extension = filePath.split(".").pop().toLowerCase();
-                    const imageTypes = {
-                        png: "image/png",
-                        jpg: "image/jpeg",
-                        jpeg: "image/jpeg",
-                        webp: "image/webp"
-                    };
+                    const imageTypes = { png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg", webp: "image/webp" };
                     const imageType = imageTypes[extension] || "application/octet-stream";
                     const imageUrl = URL.createObjectURL(new Blob([imageData], { type: imageType }));
+
                     lyrics.innerHTML = `
-                        <div style="padding: 20px 0; text-align: center;">
-                            <p class="help" style="font-size: 14px; color: #053d54; margin-bottom: 20px;">
-                                Press <strong>CTRL + B</strong> to return to Home.
-                            </p>
-                            <img src="${imageUrl}" alt="${cleanTitle}" style="max-width: 90%; height: auto; display: block; margin: 0 auto; box-shadow: 0 10px 25px rgba(0,0,0,0.3);">
-                            <p class="end-space" style="margin-top: 40px; font-size: 14px;">END OF SONG</p>
+                        <div class="image-view">
+                            <p class="image-control">Press <strong>CTRL + B</strong> to return to Home.</p>
+                            <img class="full-song-image" src="${imageUrl}" alt="${cleanTitle}">
                         </div>
                     `;
                     lyrics.scrollTop = 0;
                 } catch (loadErr) {
                     console.error("Failed to load chosen song:", loadErr);
                     alert("Could not load the requested song file.");
+                    prompter.classList.remove("image-mode");
                     prompter.style.display = "none";
                     inputPage.style.display = "flex";
                 }
@@ -663,6 +704,7 @@
     }
 
     function buildPrompter() {
+        prompter.classList.remove("image-mode");
         const raw = input.value
             .replace(/\r\n/g, "\n")
             .replace(/\r/g, "\n")
@@ -853,6 +895,7 @@
             e.preventDefault();
             stopScrolling();
             scrollMode = "none";
+            prompter.classList.remove("image-mode");
             prompter.style.display = "none";
             inputPage.style.display = "flex";
             input.focus();
