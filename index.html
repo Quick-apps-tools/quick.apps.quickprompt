@@ -458,8 +458,10 @@
                 resultsList.style.display = "none";
                 
                 // Fetch ONLY the specifically chosen image when clicked!
-                const targetUrl = `https://github.com/Quick-apps-tools/quick.apps.quickprompt/releases/download/v1.0/${encodeURIComponent(filename)}`;
-                const proxyUrl = "https://quickappsquickprompt.espinolajhonsimon11.workers.dev/?url=" + encodeURIComponent(targetUrl);
+               // Properly handle full paths stored in your songs.json array
+               const filePath = typeof match === 'string' ? match : (match.filename || match.path);
+               const targetUrl = `https://github.com/Quick-apps-tools/quick.apps.quickprompt/releases/download/v1.0/${filePath}`;
+               const proxyUrl = "https://quickappsquickprompt.espinolajhonsimon11.workers.dev/?url=" + encodeURIComponent(targetUrl);
 
                 try {
                     stopScrolling();
