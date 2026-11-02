@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>QuickPrompter</title>
 
-<!-- unzipit library for fetching single files from a remote ZIP using HTTP Range requests -->
+<!-- unzipit library for on-demand HTTP Range fetches from the remote ZIP -->
 <script src="https://unpkg.com/unzipit@latest/dist/unzipit.min.js"></script>
 
 <style>
@@ -19,13 +19,16 @@
     }
 
     .quick-title {
-        margin: 0 0 36px; text-align: center;
+        margin: 0 0 20px; text-align: center;
         font-family: Arial, sans-serif; font-size: 25px; font-weight: 800; color: #080808;
     }
 
+    .main-container {
+        display: flex; gap: 20px; max-width: 900px; margin: 0 auto; justify-content: center;
+    }
+
     .instruction-box {
-        width: 100%; max-width: 505px; margin: 0 auto;
-        background: white; border: 1px solid #ddd;
+        flex: 1; background: white; border: 1px solid #ddd;
     }
 
     .instruction-title {
@@ -40,20 +43,19 @@
 
     .instruction-step { padding: 7px 9px; border-bottom: 1px solid #ddd; font-size: 12px; }
 
-    .library-search-wrap { padding: 6px 8px 2px; position: relative; }
+    .library-search-wrap { padding: 10px 8px; position: relative; }
 
     #librarySearchInput {
         width: 100%; height: 30px; padding: 5px 8px;
         border: 1px solid #9ec3ff; border-radius: 3px; outline: none;
         font-family: Arial, sans-serif; font-size: 11px;
-        background-color: #fff;
-        cursor: text;
+        background-color: #fff; cursor: text;
     }
 
     #librarySearchInput:focus { border-color: #176cf5; }
 
     #searchResultsList {
-        display: none; position: absolute; left: 8px; right: 8px; top: 38px;
+        display: none; position: absolute; left: 8px; right: 8px; top: 40px;
         max-height: 180px; overflow-y: auto; background: white;
         border: 1px solid #176cf5; border-radius: 0 0 4px 4px;
         box-shadow: 0 4px 10px rgba(0,0,0,0.15); z-index: 100;
@@ -70,7 +72,7 @@
     .lyrics-input-wrap { padding: 4px 8px 7px; }
 
     #lyricsInput {
-        display: block; width: 100%; height: 280px; resize: vertical;
+        display: block; width: 100%; height: 200px; resize: vertical;
         padding: 5px 7px; border: 2px solid #9ec3ff; outline: none;
         background: white; color: black; font-family: Georgia, serif;
         font-size: 10px; line-height: 1.35;
@@ -78,15 +80,15 @@
 
     #lyricsInput:focus { border-color: #176cf5; }
 
-    .go-wrap { padding: 0 1px 2px; }
+    .go-wrap { padding: 0 8px 8px; }
 
-    #goButton {
+    .action-btn {
         width: 100%; height: 29px; border: 0; border-radius: 4px;
         background: #176cf5; color: white; font-family: Georgia, serif;
         font-size: 12px; font-weight: bold; cursor: pointer;
     }
 
-    #goButton:hover { background: #0d5fe2; }
+    .action-btn:hover { background: #0d5fe2; }
 
     #prompter {
         display: none; position: fixed; inset: 0; width: 100%; height: 100%;
@@ -111,11 +113,11 @@
     #lyrics img { max-width: 100%; height: auto; display: block; margin: 0 auto; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
     #lyrics .end-space { font-size: large; margin: 10em auto; }
 
-    .save-jpg-home-wrap { margin-top: 12px; text-align: center; }
+    .save-jpg-home-wrap { margin-top: 10px; text-align: center; }
 
     #saveJpgButton {
-        height: 34px; padding: 0 16px; border: 0; border-radius: 4px;
-        color: #fff; font-family: Arial, sans-serif; font-size: 12px;
+        height: 30px; padding: 0 16px; border: 0; border-radius: 4px;
+        color: #fff; font-family: Arial, sans-serif; font-size: 11px;
         font-weight: bold; cursor: pointer; transition: background 0.15s ease, opacity 0.15s ease;
     }
 
@@ -128,7 +130,6 @@
         font-family: Arial, sans-serif; font-size: 9px; color: #777; pointer-events: none;
     }
 
-    /* Loading overlay */
     #loadingOverlay {
         display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5);
         z-index: 9999; color: white; font-family: Arial, sans-serif;
@@ -146,34 +147,44 @@
 
     <div class="build-info">Date Created: October 1, 2026 &nbsp; | &nbsp; Version 2.0</div>
 
-    <div class="instruction-box">
-        <div class="instruction-title">How to use</div>
-        <div class="instruction-note">Make sure you post plain text for best result</div>
+    <div class="main-container">
+        
+        <!-- LEFT BOX: Paste Lyrics & Save JPG -->
+        <div class="instruction-box">
+            <div class="instruction-title">Manual Prompt</div>
+            <div class="instruction-note">Paste custom plain text below</div>
+            
+            <div class="lyrics-input-wrap">
+                <textarea id="lyricsInput" spellcheck="false" placeholder="Paste custom lyrics here..."></textarea>
+            </div>
 
-        <div class="instruction-step">
-            <strong>1. SEARCH</strong> or paste lyrics below.
-        </div>
-        <div class="instruction-step">
-            <strong>2. CLICK</strong> GO to open the blue prompter.
-        </div>
-
-        <!-- SEARCH BAR -->
-        <div class="library-search-wrap">
-            <input type="text" id="librarySearchInput" placeholder="🔍 Search library song title...">
-            <ul id="searchResultsList"></ul>
-        </div>
-
-        <div class="lyrics-input-wrap">
-            <textarea id="lyricsInput" spellcheck="false" placeholder=""></textarea>
+            <div class="go-wrap">
+                <button id="goButton" class="action-btn" type="button">GO (Prompter)</button>
+                <div class="save-jpg-home-wrap">
+                    <button id="saveJpgButton" type="button" class="save-not-ready">SAVE JPG</button>
+                </div>
+            </div>
         </div>
 
-        <div class="go-wrap">
-            <button id="goButton" type="button">GO</button>
+        <!-- RIGHT BOX: Library Search & Dedicated GO Button -->
+        <div class="instruction-box">
+            <div class="instruction-title">Library Search</div>
+            <div class="instruction-note">Search from your .webp archive</div>
+
+            <div class="library-search-wrap">
+                <input type="text" id="librarySearchInput" placeholder="🔍 Search song title...">
+                <ul id="searchResultsList"></ul>
+            </div>
+
+            <div class="instruction-step" style="font-size: 11px; color: #555; text-align: center; margin-top: 15px;">
+                Selected Song: <br><strong id="selectedSongLabel" style="color: #176cf5;">None selected</strong>
+            </div>
+
+            <div class="go-wrap" style="margin-top: 35px;">
+                <button id="searchGoButton" class="action-btn" type="button" disabled style="background: #aaa; cursor: not-allowed;">GO (Library Song)</button>
+            </div>
         </div>
 
-        <div class="save-jpg-home-wrap">
-            <button id="saveJpgButton" type="button" title="Save the latest lyrics as a JPG" class="save-ready">SAVE JPG</button>
-        </div>
     </div>
 </section>
 
@@ -187,6 +198,8 @@
     const inputPage = document.getElementById("quickPrompt");
     const input = document.getElementById("lyricsInput");
     const goButton = document.getElementById("goButton");
+    const searchGoButton = document.getElementById("searchGoButton");
+    const selectedSongLabel = document.getElementById("selectedSongLabel");
     const prompter = document.getElementById("prompter");
     const lyrics = document.getElementById("lyrics");
     const saveJpgButton = document.getElementById("saveJpgButton");
@@ -195,6 +208,7 @@
     const loadingOverlay = document.getElementById("loadingOverlay");
 
     let songIndex = [];
+    let selectedFullPath = "";
     const ZIP_URL = 'https://github.com/Quick-apps-tools/quick.apps.quickprompt/releases/download/multilanguage/lyrics-tangingawit-multilang.zip';
 
     async function loadSongIndex() {
@@ -202,10 +216,10 @@
             const response = await fetch('./songs.json?v=' + Date.now());
             if (!response.ok) throw new Error("HTTP error " + response.status);
             songIndex = await response.json();
-            searchInput.placeholder = "🔍 Search song title (e.g. Ang Samo, Abba Ama)...";
+            searchInput.placeholder = "🔍 Search song title (e.g. Ang Samo)...";
         } catch (err) {
             console.error("Index load error:", err);
-            searchInput.placeholder = "Search index loading failed — type manually below...";
+            searchInput.placeholder = "Search index loading failed...";
         }
     }
 
@@ -229,12 +243,16 @@
             const cleanTitle = fullPath.split('/').pop().replace(/\.(webp|txt|png|jpg)$/i, '');
             const li = document.createElement("li");
             li.textContent = cleanTitle;
-            li.addEventListener("click", async function() {
+            li.addEventListener("click", function() {
                 searchInput.value = cleanTitle;
+                selectedFullPath = fullPath;
+                selectedSongLabel.textContent = cleanTitle;
                 resultsList.style.display = "none";
                 
-                // On-demand fetch of just this single .webp file from the remote ZIP!
-                await fetchAndDisplaySongImage(fullPath, cleanTitle);
+                // Enable the library GO button
+                searchGoButton.disabled = false;
+                searchGoButton.style.background = "#176cf5";
+                searchGoButton.style.cursor = "pointer";
             });
             resultsList.appendChild(li);
         });
@@ -242,12 +260,13 @@
         resultsList.style.display = "block";
     });
 
-    async function fetchAndDisplaySongImage(fullPath, title) {
+    // Dedicated GO button for library songs
+    searchGoButton.addEventListener("click", async function() {
+        if (!selectedFullPath) return;
         loadingOverlay.style.display = "flex";
         try {
-            // Fetch only the specific file entry using unzipit range requests
             const { entries } = await unzipit.unzip(ZIP_URL);
-            const entry = entries[fullPath];
+            const entry = entries[selectedFullPath];
             
             if (!entry) {
                 alert("Song file not found in archive.");
@@ -257,14 +276,11 @@
 
             const blob = await entry.blob();
             const imageUrl = URL.createObjectURL(blob);
+            const cleanTitle = selectedFullPath.split('/').pop().replace(/\.(webp|txt|png|jpg)$/i, '');
 
-            // Build prompter view with the image
             lyrics.innerHTML = `
-                <p class="help">
-                    Press CTRL + B to return to the Home screen.<br>
-                    Press ESC to return to top.
-                </p>
-                <img src="${imageUrl}" alt="${title}">
+                <p class="help">Press CTRL + B to return to the Home screen.</p>
+                <img src="${imageUrl}" alt="${cleanTitle}">
                 <p class="end-space">END OF SONG</p>
             `;
 
@@ -277,7 +293,7 @@
         } finally {
             loadingOverlay.style.display = "none";
         }
-    }
+    });
 
     document.addEventListener("click", function(e) {
         if (e.target !== searchInput && e.target !== resultsList) {
@@ -287,7 +303,7 @@
 
     loadSongIndex();
 
-    // Standard GO button text prompter fallback
+    // Standard Manual Text Prompter & Save JPG logic
     function normalizeText() {
         return input.value.replace(/\r\n/g, "\n").replace(/\r/g, "\n").replace(/'/g, "’").trim();
     }
@@ -296,7 +312,7 @@
         const raw = normalizeText();
         if (!raw) { input.focus(); return; }
         const blocks = raw.split(/\n\s*\n+/);
-        let output = `<p class="help">HOLD ARROW UP/DOWN to scroll. Press CTRL + B to return home.</p>`;
+        let output = `<p class="help">Press CTRL + B to return home.</p>`;
         for (const block of blocks) {
             output += "<p>" + block.split("\n").map(s => s.replace(/&/g,"&amp;").replace(/</g,"&lt;")).join("<br>") + "</p>";
         }
@@ -309,7 +325,7 @@
 
     goButton.addEventListener("click", buildPrompterText);
 
-    // Keyboard shortcuts in prompter (Ctrl + B to go back)
+    // Keyboard shortcut to return home
     document.addEventListener("keydown", function (e) {
         if (prompter.style.display !== "block") return;
         if (e.ctrlKey && (e.key.toLowerCase() === "b")) {
@@ -320,9 +336,27 @@
         }
     });
 
-    input.addEventListener("input", function() {
-        saveJpgButton.disabled = !normalizeText();
-    });
+    function setSaveNotReady() {
+        saveJpgButton.disabled = true;
+        saveJpgButton.classList.remove("save-ready");
+        saveJpgButton.classList.add("save-not-ready");
+        saveJpgButton.textContent = "SAVE JPG";
+    }
+
+    function setSaveReady(text) {
+        saveJpgButton.disabled = !text;
+        saveJpgButton.classList.remove("save-not-ready");
+        saveJpgButton.classList.add("save-ready");
+    }
+
+    function reloadForJpgSave() {
+        const latest = normalizeText();
+        setSaveNotReady();
+        setTimeout(() => setSaveReady(latest), 180);
+    }
+
+    input.addEventListener("input", reloadForJpgSave);
+    reloadForJpgSave();
 })();
 </script>
 
