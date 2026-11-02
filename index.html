@@ -235,16 +235,15 @@
 
     let zipEntries = null;
     let songIndex = [];
-    const ZIP_URL = 'https://github.com/Quick-apps-tools/quick.apps.quickprompt/releases/download/multilanguage/lyrics-tangingawit-multilang.zip';
+    const rawZipUrl = 'https://github.com/Quick-apps-tools/quick.apps.quickprompt/releases/download/multilanguage/lyrics-tangingawit-multilang.zip';
+    const ZIP_URL = 'https://corsproxy.io/?' + encodeURIComponent(rawZipUrl);
 
-    // Download and cache the ZIP file locally in browser memory on startup
     async function initArchive() {
         try {
             loadingOverlay.textContent = "Downloading song archive...";
             const result = await unzipit.unzip(ZIP_URL);
             zipEntries = result.entries;
 
-            // Load songs.json index
             const response = await fetch('./songs.json?v=' + Date.now());
             if (!response.ok) throw new Error("HTTP error " + response.status);
             songIndex = await response.json();
@@ -252,10 +251,9 @@
             searchInput.removeAttribute("disabled");
             searchInput.placeholder = "🔍 Search song title (e.g. Ang Samo)...";
             loadingOverlay.style.display = "none";
-            console.log("Archive loaded successfully with " + Object.keys(zipEntries).length + " files!");
         } catch (err) {
             console.error("Archive initialization error:", err);
-            loadingOverlay.textContent = "Failed to load archive. Check console.";
+            loadingOverlay.textContent = "Failed to load archive. Check internet connection.";
             setTimeout(() => { loadingOverlay.style.display = "none"; }, 3000);
         }
     }
@@ -341,7 +339,6 @@
 
     initArchive();
 
-    // SAVE JPG readiness
     let preparedText = "";
     let prepareTimer = null;
 
@@ -385,12 +382,8 @@
         }, 180);
     }
 
-    // ============================================================
-    // CONTROLS
-    // ============================================================
-
     let speed = 20;
-    let direction = 2; // 1 = UP, 2 = DOWN
+    let direction = 2;
     let isMoving = false;
     let animationFrame = null;
     let lastTime = 0;
