@@ -447,21 +447,16 @@
                 selectedSongLabel.textContent = cleanTitle;
                 resultsList.style.display = "none";
                 
-                const imageUrl = fullPath.startsWith('./') ? fullPath : './' + fullPath;
+                const imageUrl = '/' + fullPath.replace(/^\.\//, '');
                 stopScrolling();
                 lyrics.innerHTML = `
-                    <p class="help">
-                        HOLD ARROW UP or DOWN to scroll manually.<br>
-                        Press 1–9 to start/change automatic scroll speed.<br>
-                        Press ARROW DOWN once to stop automatic scrolling.<br>
-                        Press SPACE / ENTER / 0 to stop.<br>
-                        Press CTRL + B to return to the Home screen.<br>
-                        Press ESC to return to the top.
-                    </p>
-                    <img src="${imageUrl}" alt="${cleanTitle}">
-                    <p class="end-space">
-                        CLICK CTRL + B TO RETURN TO THE HOME SCREEN
-                    </p>
+                    <div style="padding: 20px 0; text-align: center;">
+                        <p class="help" style="font-size: 14px; color: #053d54; margin-bottom: 20px;">
+                            Press <strong>CTRL + B</strong> to return to Home.
+                        </p>
+                        <img src="${imageUrl}" alt="${cleanTitle}" style="max-width: 90%; height: auto; display: block; margin: 0 auto; box-shadow: 0 10px 25px rgba(0,0,0,0.3);">
+                        <p class="end-space" style="margin-top: 40px; font-size: 14px;">END OF SONG</p>
+                    </div>
                 `;
 
                 inputPage.style.display = "none";
