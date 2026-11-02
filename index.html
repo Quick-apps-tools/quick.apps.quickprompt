@@ -214,7 +214,7 @@
         }
 
         matches.forEach(filename => {
-            const cleanTitle = filename.replace(/\.(webp|txt|png|jpg)$/i, '');
+            const cleanTitle = filename.split('/').pop().replace(/\.(webp|txt|png|jpg)$/i, '');
             const li = document.createElement("li");
             li.textContent = cleanTitle;
             li.addEventListener("click", function() {
