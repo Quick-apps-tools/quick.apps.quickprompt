@@ -457,10 +457,8 @@
                 selectedSongLabel.textContent = cleanTitle;
                 resultsList.style.display = "none";
                 
-                // Properly split by slashes and encode each folder/file segment individually
-                const encodedPath = filePath.split('/').map(segment => encodeURIComponent(segment)).join('/');
-                const targetUrl = `https://github.com/Quick-apps-tools/quick.apps.quickprompt/releases/download/v1.0/${encodedPath}`;
-                const proxyUrl = "https://quickappsquickprompt.espinolajhonsimon11.workers.dev/?url=" + encodeURIComponent(targetUrl);
+                const zipUrl = "https://github.com/Quick-apps-tools/quick.apps.quickprompt/releases/download/v1.0/lyrics-tangingawit-multilang.zip";
+                const proxyUrl = "https://quickappsquickprompt.espinolajhonsimon11.workers.dev/?url=" + encodeURIComponent(zipUrl);
 
                 try {
                     stopScrolling();
@@ -474,11 +472,33 @@
                     inputPage.style.display = "none";
                     prompter.style.display = "block";
 
-                    const imgRes = await fetch(proxyUrl);
-                    if (!imgRes.ok) throw new Error("Failed to load file: HTTP " + imgRes.status);
-                    const blob = await imgRes.blob();
-                    const imageUrl = URL.createObjectURL(blob);
+                    const { ZipReader, HttpReader, Uint8ArrayWriter } =
+                        await import("https://cdn.jsdelivr.net/npm/@zip.js/zip.js@2.24.0/index.min.js");
 
+                    const zipReader = new ZipReader(
+                        new HttpReader(proxyUrl, { useRangeHeader: true, forceRangeRequests: true })
+                    );
+
+                    let imageData;
+                    try {
+                        const entries = await zipReader.getEntries();
+                        const songEntry = entries.find(entry => entry.filename === filePath);
+
+                        if (!songEntry) throw new Error("Song image was not found inside the ZIP: " + filePath);
+                        imageData = await songEntry.getData(new Uint8ArrayWriter());
+                    } finally {
+                        await zipReader.close();
+                    }
+
+                    const extension = filePath.split(".").pop().toLowerCase();
+                    const imageTypes = {
+                        png: "image/png",
+                        jpg: "image/jpeg",
+                        jpeg: "image/jpeg",
+                        webp: "image/webp"
+                    };
+                    const imageType = imageTypes[extension] || "application/octet-stream";
+                    const imageUrl = URL.createObjectURL(new Blob([imageData], { type: imageType }));
                     lyrics.innerHTML = `
                         <div style="padding: 20px 0; text-align: center;">
                             <p class="help" style="font-size: 14px; color: #053d54; margin-bottom: 20px;">
