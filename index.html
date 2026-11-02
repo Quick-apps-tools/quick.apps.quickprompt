@@ -443,12 +443,12 @@
             return;
         }
 
-        matches.forEach(match => {
+matches.forEach(match => {
             const cleanTitle = typeof match === 'string' 
                 ? match.split('/').pop().replace(/\.(webp|txt|png|jpg)$/i, '')
                 : match.title;
 
-            const filename = typeof match === 'string' ? match : (match.filename || match.path);
+            const filePath = typeof match === 'string' ? match : (match.filename || match.path);
 
             const li = document.createElement("li");
             li.textContent = cleanTitle;
@@ -457,11 +457,10 @@
                 selectedSongLabel.textContent = cleanTitle;
                 resultsList.style.display = "none";
                 
-                // Fetch ONLY the specifically chosen image when clicked!
-               // Properly handle full paths stored in your songs.json array
-               const filePath = typeof match === 'string' ? match : (match.filename || match.path);
-               const targetUrl = `https://github.com/Quick-apps-tools/quick.apps.quickprompt/releases/download/v1.0/${filePath}`;
-               const proxyUrl = "https://quickappsquickprompt.espinolajhonsimon11.workers.dev/?url=" + encodeURIComponent(targetUrl);
+                // Properly split by slashes and encode each folder/file segment individually
+                const encodedPath = filePath.split('/').map(segment => encodeURIComponent(segment)).join('/');
+                const targetUrl = `https://github.com/Quick-apps-tools/quick.apps.quickprompt/releases/download/v1.0/${encodedPath}`;
+                const proxyUrl = "https://quickappsquickprompt.espinolajhonsimon11.workers.dev/?url=" + encodeURIComponent(targetUrl);
 
                 try {
                     stopScrolling();
@@ -476,7 +475,7 @@
                     prompter.style.display = "block";
 
                     const imgRes = await fetch(proxyUrl);
-                    if (!imgRes.ok) throw new Error("Failed to load file");
+                    if (!imgRes.ok) throw new Error("Failed to load file: HTTP " + imgRes.status);
                     const blob = await imgRes.blob();
                     const imageUrl = URL.createObjectURL(blob);
 
@@ -499,9 +498,6 @@
             });
             resultsList.appendChild(li);
         });
-
-        resultsList.style.display = "block";
-    });
 
     document.addEventListener("click", function(e) {
         if (e.target !== searchInput && e.target !== resultsList) {
