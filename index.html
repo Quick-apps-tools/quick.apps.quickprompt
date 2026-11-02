@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>QuickPrompter</title>
 
+<!-- unzipit library for fetching single files from a remote ZIP using HTTP Range requests -->
+<script src="https://unpkg.com/unzipit@latest/dist/unzipit.min.js"></script>
+
 <style>
     * { box-sizing: border-box; }
     html, body { margin: 0; width: 100%; height: 100%; font-family: Georgia, serif; }
@@ -104,9 +107,9 @@
     }
 
     #lyrics::-webkit-scrollbar { display: none; }
-    #lyrics .help { font-size: large; margin-bottom: 12em; }
-    #lyrics p { margin-top: 1em; margin-bottom: 1em; }
-    #lyrics .end-space { font-size: large; margin: 40em auto; }
+    #lyrics .help { font-size: large; margin-bottom: 2em; color: #053d54; }
+    #lyrics img { max-width: 100%; height: auto; display: block; margin: 0 auto; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+    #lyrics .end-space { font-size: large; margin: 10em auto; }
 
     .save-jpg-home-wrap { margin-top: 12px; text-align: center; }
 
@@ -124,10 +127,19 @@
         position: fixed; left: 10px; bottom: 7px; z-index: 1000;
         font-family: Arial, sans-serif; font-size: 9px; color: #777; pointer-events: none;
     }
+
+    /* Loading overlay */
+    #loadingOverlay {
+        display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+        z-index: 9999; color: white; font-family: Arial, sans-serif;
+        align-items: center; justify-content: center; font-size: 18px; font-weight: bold;
+    }
 </style>
 </head>
 
 <body>
+
+<div id="loadingOverlay">Fetching song image from library...</div>
 
 <section id="quickPrompt">
     <h1 class="quick-title">QuickPrompter</h1>
@@ -147,7 +159,7 @@
 
         <!-- SEARCH BAR -->
         <div class="library-search-wrap">
-            <input type="text" id="librarySearchInput" placeholder="🔍 Loading search index...">
+            <input type="text" id="librarySearchInput" placeholder="🔍 Search library song title...">
             <ul id="searchResultsList"></ul>
         </div>
 
@@ -180,17 +192,17 @@
     const saveJpgButton = document.getElementById("saveJpgButton");
     const searchInput = document.getElementById("librarySearchInput");
     const resultsList = document.getElementById("searchResultsList");
+    const loadingOverlay = document.getElementById("loadingOverlay");
 
     let songIndex = [];
+    const ZIP_URL = 'https://github.com/Quick-apps-tools/quick.apps.quickprompt/releases/download/multilanguage/lyrics-tangingawit-multilang.zip';
 
     async function loadSongIndex() {
         try {
             const response = await fetch('./songs.json?v=' + Date.now());
             if (!response.ok) throw new Error("HTTP error " + response.status);
             songIndex = await response.json();
-            
             searchInput.placeholder = "🔍 Search song title (e.g. Ang Samo, Abba Ama)...";
-            console.log("Loaded " + songIndex.length + " songs into search index!");
         } catch (err) {
             console.error("Index load error:", err);
             searchInput.placeholder = "Search index loading failed — type manually below...";
@@ -213,22 +225,59 @@
             return;
         }
 
-        matches.forEach(filename => {
-            // Extracts just the filename and strips extension, hiding folder paths
-            const cleanTitle = filename.split('/').pop().replace(/\.(webp|txt|png|jpg)$/i, '');
+        matches.forEach(fullPath => {
+            const cleanTitle = fullPath.split('/').pop().replace(/\.(webp|txt|png|jpg)$/i, '');
             const li = document.createElement("li");
             li.textContent = cleanTitle;
-            li.addEventListener("click", function() {
-                input.value = cleanTitle;
+            li.addEventListener("click", async function() {
                 searchInput.value = cleanTitle;
                 resultsList.style.display = "none";
-                reloadForJpgSave();
+                
+                // On-demand fetch of just this single .webp file from the remote ZIP!
+                await fetchAndDisplaySongImage(fullPath, cleanTitle);
             });
             resultsList.appendChild(li);
         });
 
         resultsList.style.display = "block";
     });
+
+    async function fetchAndDisplaySongImage(fullPath, title) {
+        loadingOverlay.style.display = "flex";
+        try {
+            // Fetch only the specific file entry using unzipit range requests
+            const { entries } = await unzipit.unzip(ZIP_URL);
+            const entry = entries[fullPath];
+            
+            if (!entry) {
+                alert("Song file not found in archive.");
+                loadingOverlay.style.display = "none";
+                return;
+            }
+
+            const blob = await entry.blob();
+            const imageUrl = URL.createObjectURL(blob);
+
+            // Build prompter view with the image
+            lyrics.innerHTML = `
+                <p class="help">
+                    Press CTRL + B to return to the Home screen.<br>
+                    Press ESC to return to top.
+                </p>
+                <img src="${imageUrl}" alt="${title}">
+                <p class="end-space">END OF SONG</p>
+            `;
+
+            inputPage.style.display = "none";
+            prompter.style.display = "block";
+            lyrics.scrollTop = 0;
+        } catch (err) {
+            console.error("Failed to fetch song image:", err);
+            alert("Could not load song image. Check internet connection.");
+        } finally {
+            loadingOverlay.style.display = "none";
+        }
+    }
 
     document.addEventListener("click", function(e) {
         if (e.target !== searchInput && e.target !== resultsList) {
@@ -238,43 +287,42 @@
 
     loadSongIndex();
 
-    let preparedText = "";
-    let prepareTimer = null;
-
+    // Standard GO button text prompter fallback
     function normalizeText() {
         return input.value.replace(/\r\n/g, "\n").replace(/\r/g, "\n").replace(/'/g, "’").trim();
     }
 
-    function setSaveNotReady() {
-        saveJpgButton.disabled = true;
-        saveJpgButton.classList.remove("save-ready");
-        saveJpgButton.classList.add("save-not-ready");
-    }
-
-    function setSaveReady(text) {
-        preparedText = text;
-        saveJpgButton.disabled = !text;
-        saveJpgButton.classList.remove("save-not-ready");
-        saveJpgButton.classList.add("save-ready");
-    }
-
-    function reloadForJpgSave() {
-        const latest = normalizeText();
-        setSaveNotReady();
-        clearTimeout(prepareTimer);
-        prepareTimer = setTimeout(() => setSaveReady(latest), 180);
-    }
-
-    function openOutputTab() {
+    function buildPrompterText() {
         const raw = normalizeText();
         if (!raw) { input.focus(); return; }
-        const baseUrl = window.location.href.split("#")[0];
-        window.open(baseUrl + "#output=" + encodeURIComponent(raw), "_blank");
+        const blocks = raw.split(/\n\s*\n+/);
+        let output = `<p class="help">HOLD ARROW UP/DOWN to scroll. Press CTRL + B to return home.</p>`;
+        for (const block of blocks) {
+            output += "<p>" + block.split("\n").map(s => s.replace(/&/g,"&amp;").replace(/</g,"&lt;")).join("<br>") + "</p>";
+        }
+        output += `<p class="end-space">RETURN HOME VIA CTRL + B</p>`;
+        lyrics.innerHTML = output;
+        inputPage.style.display = "none";
+        prompter.style.display = "block";
+        lyrics.scrollTop = 0;
     }
 
-    goButton.addEventListener("click", openOutputTab);
-    input.addEventListener("input", reloadForJpgSave);
-    reloadForJpgSave();
+    goButton.addEventListener("click", buildPrompterText);
+
+    // Keyboard shortcuts in prompter (Ctrl + B to go back)
+    document.addEventListener("keydown", function (e) {
+        if (prompter.style.display !== "block") return;
+        if (e.ctrlKey && (e.key.toLowerCase() === "b")) {
+            e.preventDefault();
+            prompter.style.display = "none";
+            inputPage.style.display = "flex";
+            input.focus();
+        }
+    });
+
+    input.addEventListener("input", function() {
+        saveJpgButton.disabled = !normalizeText();
+    });
 })();
 </script>
 
