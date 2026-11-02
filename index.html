@@ -47,11 +47,6 @@
         cursor: text;
     }
 
-    #librarySearchInput:disabled {
-        background-color: #e9ecef;
-        cursor: not-allowed;
-    }
-
     #librarySearchInput:focus { border-color: #176cf5; }
 
     #searchResultsList {
@@ -150,9 +145,9 @@
             <strong>2. CLICK</strong> GO to open the blue prompter.
         </div>
 
-        <!-- SEARCH BAR -->
+        <!-- SEARCH BAR (No disabled attribute, fully clickable immediately) -->
         <div class="library-search-wrap">
-            <input type="text" id="librarySearchInput" placeholder="🔍 Loading search index..." disabled>
+            <input type="text" id="librarySearchInput" placeholder="🔍 Loading search index...">
             <ul id="searchResultsList"></ul>
         </div>
 
@@ -194,15 +189,11 @@
             if (!response.ok) throw new Error("HTTP error " + response.status);
             songIndex = await response.json();
             
-            searchInput.removeAttribute("disabled");
-            searchInput.disabled = false;
             searchInput.placeholder = "🔍 Search song title (e.g. Ang Samo, Abba Ama)...";
             console.log("Loaded " + songIndex.length + " songs into search index!");
         } catch (err) {
             console.error("Index load error:", err);
-            searchInput.removeAttribute("disabled");
-            searchInput.disabled = false;
-            searchInput.placeholder = "Search unavailable — type or paste lyrics below...";
+            searchInput.placeholder = "Search index loading failed — type manually below...";
         }
     }
 
@@ -210,7 +201,7 @@
         const query = this.value.trim().toLowerCase();
         resultsList.innerHTML = "";
         
-        if (!query) {
+        if (!query || songIndex.length === 0) {
             resultsList.style.display = "none";
             return;
         }
