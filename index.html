@@ -5,9 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>QuickPrompter</title>
 
-<!-- unzipit library -->
-<script src="https://unpkg.com/unzipit@latest/dist/unzipit.min.js"></script>
-
 <style>
     * { box-sizing: border-box; }
     html, body { margin: 0; width: 100%; height: 100%; font-family: Georgia, serif; }
@@ -135,7 +132,7 @@
     #status { position: fixed; left: -9999px; }
 
     #loadingOverlay {
-        display: flex; position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+        display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5);
         z-index: 9999; color: white; font-family: Arial, sans-serif;
         align-items: center; justify-content: center; font-size: 18px; font-weight: bold;
     }
@@ -144,7 +141,7 @@
 
 <body>
 
-<div id="loadingOverlay">Connecting to library archive...</div>
+<div id="loadingOverlay">Loading song...</div>
 
 <!-- QUICK PROMPT -->
 <section id="quickPrompt">
@@ -188,7 +185,7 @@
             <div class="instruction-title">Library Search</div>
 
             <div class="instruction-note">
-                Search & view .webp archive instantly
+                Search & view archive instantly
             </div>
 
             <div class="instruction-step">
@@ -200,7 +197,7 @@
             </div>
 
             <div class="library-search-wrap">
-                <input type="text" id="librarySearchInput" disabled spellcheck="false" placeholder="⏳ Loading archive into memory...">
+                <input type="text" id="librarySearchInput" spellcheck="false" placeholder="🔍 Search library song title...">
                 <ul id="searchResultsList"></ul>
             </div>
 
@@ -233,28 +230,17 @@
     const loadingOverlay = document.getElementById("loadingOverlay");
     const selectedSongLabel = document.getElementById("selectedSongLabel");
 
-    let zipEntries = null;
     let songIndex = [];
-    const rawZipUrl = 'https://github.com/Quick-apps-tools/quick.apps.quickprompt/releases/download/multilanguage/lyrics-tangingawit-multilang.zip';
-    const ZIP_URL = 'https://corsproxy.io/?' + encodeURIComponent(rawZipUrl);
 
-    async function initArchive() {
+    async function loadSongIndex() {
         try {
-            loadingOverlay.textContent = "Downloading song archive...";
-            const result = await unzipit.unzip(ZIP_URL);
-            zipEntries = result.entries;
-
             const response = await fetch('./songs.json?v=' + Date.now());
             if (!response.ok) throw new Error("HTTP error " + response.status);
             songIndex = await response.json();
-
-            searchInput.removeAttribute("disabled");
             searchInput.placeholder = "🔍 Search song title (e.g. Ang Samo)...";
-            loadingOverlay.style.display = "none";
         } catch (err) {
-            console.error("Archive initialization error:", err);
-            loadingOverlay.textContent = "Failed to load archive. Check internet connection.";
-            setTimeout(() => { loadingOverlay.style.display = "none"; }, 3000);
+            console.error("Index load error:", err);
+            searchInput.placeholder = "Search index loading failed...";
         }
     }
 
@@ -283,7 +269,7 @@
                 selectedSongLabel.textContent = cleanTitle;
                 resultsList.style.display = "none";
                 
-                await displaySongImage(fullPath, cleanTitle);
+                await fetchAndDisplaySongImage(fullPath, cleanTitle);
             });
             resultsList.appendChild(li);
         });
@@ -291,19 +277,11 @@
         resultsList.style.display = "block";
     });
 
-    async function displaySongImage(fullPath, title) {
-        if (!zipEntries || !zipEntries[fullPath]) {
-            alert("Song file not found in archive.");
-            return;
-        }
-
-        loadingOverlay.textContent = "Opening song...";
+    async function fetchAndDisplaySongImage(fullPath, title) {
         loadingOverlay.style.display = "flex";
         try {
-            const entry = zipEntries[fullPath];
-            const blob = await entry.blob();
-            const imageUrl = URL.createObjectURL(blob);
-
+            const imageUrl = `./${fullPath}`;
+            
             stopScrolling();
             lyrics.innerHTML = `
                 <p class="help">
@@ -324,8 +302,8 @@
             prompter.style.display = "block";
             lyrics.scrollTop = 0;
         } catch (err) {
-            console.error("Failed to render song image:", err);
-            alert("Could not render song image.");
+            console.error("Failed to load song image:", err);
+            alert("Could not load song image.");
         } finally {
             loadingOverlay.style.display = "none";
         }
@@ -337,7 +315,7 @@
         }
     });
 
-    initArchive();
+    loadSongIndex();
 
     let preparedText = "";
     let prepareTimer = null;
