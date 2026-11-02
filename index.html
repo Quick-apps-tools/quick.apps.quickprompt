@@ -445,7 +445,7 @@
 
         matches.forEach(match => {
             const cleanTitle = typeof match === 'string' 
-                ? match.split('/').pop().replace(/\.(webp|txt|png|jpg)$/i, '')
+                ? match.split('/').pop().replace(/\.[^/.]+$/, "")
                 : match.title;
 
             const filePath = typeof match === 'string' ? match : (match.filename || match.path);
