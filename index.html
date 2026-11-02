@@ -443,7 +443,7 @@
             return;
         }
 
-matches.forEach(match => {
+        matches.forEach(match => {
             const cleanTitle = typeof match === 'string' 
                 ? match.split('/').pop().replace(/\.(webp|txt|png|jpg)$/i, '')
                 : match.title;
@@ -498,6 +498,9 @@ matches.forEach(match => {
             });
             resultsList.appendChild(li);
         });
+
+        resultsList.style.display = "block";
+    });
 
     document.addEventListener("click", function(e) {
         if (e.target !== searchInput && e.target !== resultsList) {
