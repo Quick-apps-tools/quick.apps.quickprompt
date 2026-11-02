@@ -407,14 +407,20 @@
     const resultsList = document.getElementById("searchResultsList");
     const selectedSongLabel = document.getElementById("selectedSongLabel");
 
-    let songIndex = [];
+let songIndex = [];
 
-    // Load songs.json index for search
     async function loadSongIndex() {
         try {
-            const response = await fetch('./songs.json?v=' + Date.now());
+            // PASTE YOUR PROXY FETCH CODE HERE:
+            const githubReleaseUrl = "https://github.com/Quick-apps-tools/quick.apps.quickprompt/releases/download/v1.0/lyrics.zip";
+            const proxyUrl = "https://quickappsquickprompt.espinolajhonsimon11.workers.dev/?url=" + encodeURIComponent(githubReleaseUrl);
+            const response = await fetch(proxyUrl);
+            
             if (!response.ok) throw new Error("HTTP error " + response.status);
-            songIndex = await response.json();
+            
+            // If your ZIP contains your songs.json or index file, process it here:
+            // (Note: If you are reading chunks from the ZIP, you can pass 'response' to your unzipping logic)
+            
             searchInput.placeholder = "🔍 Search song title (e.g. Ang Samo)...";
         } catch (err) {
             console.error("Index load error:", err);
