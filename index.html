@@ -375,7 +375,7 @@
             </div>
 
             <div class="library-search-wrap">
-                <input type="text" id="librarySearchInput" spellcheck="false" placeholder="🔍 Search song title...">
+                <input type="text" id="librarySearchInput" spellcheck="false" placeholder="🔍 Search library song title...">
                 <ul id="searchResultsList"></ul>
             </div>
 
@@ -447,8 +447,7 @@
                 selectedSongLabel.textContent = cleanTitle;
                 resultsList.style.display = "none";
                 
-                // Display the image directly using its repository path
-                const imageUrl = `./${fullPath}`;
+                const imageUrl = fullPath.startsWith('./') ? fullPath : './' + fullPath;
                 stopScrolling();
                 lyrics.innerHTML = `
                     <p class="help">
