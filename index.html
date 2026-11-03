@@ -1,1 +1,1031 @@
+<!DOCTYPE html>
+<!-- saved from url=(0058)https://quick-apps-tools.github.io/quick.apps.quickprompt/ -->
+<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QuickPrompter</title>
+
+<style>
+    * {
+        box-sizing: border-box;
+    }
+
+    html, body {
+        margin: 0;
+        width: 100%;
+        height: 100%;
+        font-family: Georgia, serif;
+    }
+
+    body {
+        background: #f5f5f5;
+        overflow: hidden;
+    }
+
+    /* =========================
+       QUICK PROMPT INPUT PAGE
+       ========================= */
+
+    #quickPrompt {
+        width: 100%;
+        height: 100%;
+        overflow-y: auto;
+        padding: 8px 30px 28px;
+        background: #f7f7f7;
+    }
+
+    .quick-title {
+        margin: 0 0 20px;
+        text-align: center;
+        font-family: Arial, sans-serif;
+        font-size: 25px;
+        font-weight: 800;
+        color: #080808;
+    }
+
+    .main-container {
+        display: flex;
+        gap: 20px;
+        max-width: 1040px;
+        margin: 0 auto;
+        justify-content: center;
+    }
+
+    .instruction-box {
+        flex: 1;
+        max-width: 505px;
+        background: white;
+        border: 1px solid #ddd;
+    }
+
+    .instruction-title {
+        height: 31px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #176cf5;
+        color: white;
+        font-size: 14px;
+        font-weight: bold;
+    }
+
+    .instruction-note {
+        padding: 6px 8px;
+        text-align: center;
+        background: #fff1c9;
+        border-bottom: 1px solid #d9cba4;
+        font-size: 12px;
+    }
+
+    .instruction-step {
+        padding: 7px 9px;
+        border-bottom: 1px solid #ddd;
+        font-size: 12px;
+    }
+
+    /* Library Search Styles */
+    .library-search-wrap {
+        padding: 6px 8px 2px;
+        position: relative;
+    }
+
+    #librarySearchInput {
+        display: block;
+        width: 100%;
+        height: 30px;
+        padding: 5px 8px;
+        border: 1px solid #9ec3ff;
+        border-radius: 3px;
+        outline: none;
+        background: white;
+        color: black;
+        font-family: Arial, sans-serif;
+        font-size: 11px;
+    }
+
+    #librarySearchInput:focus {
+        border-color: #176cf5;
+    }
+
+    #searchResultsList {
+        display: none;
+        position: absolute;
+        left: 8px;
+        right: 8px;
+        top: 38px;
+        max-height: 180px;
+        overflow-y: auto;
+        background: white;
+        border: 1px solid #176cf5;
+        border-radius: 0 0 4px 4px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+        z-index: 100;
+        list-style: none;
+        margin: 0;
+        padding: 0;
+    }
+
+    #searchResultsList li {
+        padding: 6px 10px;
+        font-family: Arial, sans-serif;
+        font-size: 11px;
+        cursor: pointer;
+        border-bottom: 1px solid #eee;
+    }
+
+    #searchResultsList li:hover {
+        background: #eaf2ff;
+        color: #176cf5;
+        font-weight: bold;
+    }
+
+    .lyrics-input-wrap {
+        padding: 4px 8px 7px;
+    }
+
+    #lyricsInput {
+        display: block;
+        width: 100%;
+        height: 280px;
+        resize: vertical;
+        padding: 5px 7px;
+        border: 2px solid #9ec3ff;
+        outline: none;
+        background: white;
+        color: black;
+        font-family: Georgia, serif;
+        font-size: 10px;
+        line-height: 1.35;
+    }
+
+    #lyricsInput:focus {
+        border-color: #176cf5;
+    }
+
+    .go-wrap {
+        padding: 0 1px 2px;
+    }
+
+    #goButton {
+        width: 100%;
+        height: 29px;
+        border: 0;
+        border-radius: 4px;
+        background: #176cf5;
+        color: white;
+        font-family: Georgia, serif;
+        font-size: 12px;
+        font-weight: bold;
+        cursor: pointer;
+    }
+
+    #goButton:hover {
+        background: #0d5fe2;
+    }
+
+    /* =========================
+       BLUE PROMPTER
+       ========================= */
+
+    #prompter {
+        display: none;
+        position: fixed;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: #31b8ed;
+    }
+
+    .bg-gradient {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 110%;
+        margin-top: -0.2em;
+        background:
+            linear-gradient(
+                to right,
+                #31b8ed 0%,
+                #ddf1f9 30%,
+                #feffff 50%,
+                #feffff 50%,
+                #ddf1f9 70%,
+                #31b8ed 100%
+            );
+    }
+
+    #lyrics {
+        margin: 0 auto;
+        height: 100%;
+        width: 80%;
+        position: relative;
+        font-size: 7em;
+        font-weight: bold;
+        overflow-y: auto;
+        overflow-x: hidden;
+        text-align: center;
+        background: none;
+        font-family: Georgia, serif;
+        scrollbar-width: none;
+    }
+
+    #lyrics::-webkit-scrollbar {
+        display: none;
+    }
+
+    #lyrics .help {
+        font-size: large;
+        margin-bottom: 12em;
+    }
+
+    #lyrics p {
+        margin-top: 1em;
+        margin-bottom: 1em;
+    }
+
+    #lyrics img {
+        max-width: 100%;
+        height: auto;
+        display: block;
+        margin: 0 auto;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    }
+
+    #lyrics .end-space {
+        font-size: large;
+        margin: 40em auto;
+    }
+
+    #prompter.image-mode {
+        background: #000;
+    }
+
+    #prompter.image-mode .bg-gradient {
+        display: none;
+    }
+
+    #prompter.image-mode #lyrics {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        overflow-x: hidden;
+        overflow-y: auto;
+        font-size: initial;
+    }
+
+    #prompter.image-mode .image-view {
+        position: relative;
+        display: block;
+        width: 100%;
+        min-height: 100%;
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    #prompter.image-mode .full-song-image {
+        display: block;
+        width: 100%;
+        height: auto;
+        max-width: 100%;
+        margin: 0;
+        object-fit: contain;
+        box-shadow: none;
+    }
+    /* =========================
+       SAVE JPG — HOME PAGE ONLY
+       ========================= */
+    .save-jpg-home-wrap {
+        margin-top: 12px;
+        text-align: center;
+    }
+
+    #saveJpgButton {
+        height: 34px;
+        padding: 0 16px;
+        border: 0;
+        border-radius: 4px;
+        color: #fff;
+        font-family: Arial, sans-serif;
+        font-size: 12px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: background 0.15s ease, opacity 0.15s ease;
+    }
+
+    #saveJpgButton.save-not-ready {
+        background: #888;
+        cursor: wait;
+        opacity: 0.65;
+    }
+
+    #saveJpgButton.save-ready {
+        background: #20a84a;
+        cursor: pointer;
+        opacity: 1;
+    }
+
+    #saveJpgButton.save-ready:hover {
+        background: #188b3c;
+    }
+
+    #saveJpgButton:disabled {
+        pointer-events: none;
+    }
+
+    .build-info {
+        position: fixed;
+        left: 10px;
+        bottom: 7px;
+        z-index: 1000;
+        font-family: Arial, sans-serif;
+        font-size: 9px;
+        font-weight: normal;
+        color: #777;
+        line-height: 1.2;
+        pointer-events: none;
+    }
+
+    #status {
+        position: fixed;
+        left: -9999px;
+    }
+
+    /* Temporary maintenance layer: keeps the site visible behind it and blocks clicks. */
+    #maintenanceOverlay {
+        position: fixed;
+        inset: 0;
+        z-index: 2147483647;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+        background: rgba(0, 0, 0, 0.7);
+        color: #fff;
+        text-align: center;
+        font-family: "Times New Roman", Times, serif;
+        font-size: clamp(24px, 5vw, 48px);
+        font-weight: 700;
+        pointer-events: auto;
+        user-select: none;
+    }
+</style>
+</head>
+
+<body>
+<div id="maintenanceOverlay" role="status" aria-live="polite">
+    Website Under Update
+</div>
+
+
+<!-- QUICK PROMPT -->
+<section id="quickPrompt">
+    <h1 class="quick-title">QuickPrompter</h1>
+
+    <div class="build-info">Date Created: October 1, 2026 &nbsp; | &nbsp; Version 2.0</div>
+
+    <div class="main-container">
+        
+        <!-- LEFT: ORIGINAL QUICK PROMPT -->
+        <div class="instruction-box">
+            <div class="instruction-title">How to use</div>
+
+            <div class="instruction-note">
+                Make sure you post plain text for best result
+            </div>
+
+            <div class="instruction-step">
+                <strong>1. PASTE</strong> your lyrics or block of text below.
+            </div>
+
+            <div class="instruction-step">
+                <strong>2. CLICK</strong> GO to open the blue prompter.
+            </div>
+
+            <div class="lyrics-input-wrap">
+                <textarea id="lyricsInput" spellcheck="false" placeholder=""></textarea>
+            </div>
+
+            <div class="go-wrap">
+                <button id="goButton" type="button">GO</button>
+            </div>
+
+            <div class="save-jpg-home-wrap">
+                <button id="saveJpgButton" type="button" title="Save the latest lyrics as a JPG" class="save-ready">SAVE JPG</button>
+            </div>
+        </div>
+
+        <!-- RIGHT: LIBRARY SEARCH -->
+        <div class="instruction-box">
+            <div class="instruction-title">Library Search</div>
+
+            <div class="instruction-note">
+                Search & view .avif archive instantly
+            </div>
+
+            <div class="instruction-step">
+                <strong>1. SEARCH</strong> song title in archive below.
+            </div>
+
+            <div class="instruction-step">
+                <strong>2. CLICK</strong> a result to open in prompter.
+            </div>
+
+            <div class="library-search-wrap">
+                <input type="text" id="librarySearchInput" spellcheck="false" placeholder="🔍 Search library song title...">
+                <ul id="searchResultsList"></ul>
+            </div>
+
+            <div class="instruction-step" style="font-size: 11px; color: #555; text-align: center; margin-top: 55px; border-bottom: none;">
+                Currently Displayed: <br><strong id="selectedSongLabel" style="color: #176cf5;">None</strong>
+            </div>
+        </div>
+
+    </div>
+</section>
+
+<!-- BLUE PROMPTER -->
+<section id="prompter">
+    <div class="bg-gradient"></div>
+    <div id="lyrics"></div>
+</section>
+
+<div id="status"></div>
+
+<script>
+(function () {
+    const inputPage = document.getElementById("quickPrompt");
+    const input = document.getElementById("lyricsInput");
+    const goButton = document.getElementById("goButton");
+    const prompter = document.getElementById("prompter");
+    const lyrics = document.getElementById("lyrics");
+    const saveJpgButton = document.getElementById("saveJpgButton");
+    const searchInput = document.getElementById("librarySearchInput");
+    const resultsList = document.getElementById("searchResultsList");
+    const selectedSongLabel = document.getElementById("selectedSongLabel");
+
+    let songIndex = [];
+
+    async function showLibrarySong(filePath, cleanTitle) {
+        const zipUrl = "https://github.com/Quick-apps-tools/quick.apps.quickprompt/releases/download/v1.0/lyrics-tangingawit-multilang.zip";
+        const proxyUrl = "https://quickappsquickprompt.espinolajhonsimon11.workers.dev/?url=" + encodeURIComponent(zipUrl);
+
+        try {
+            stopScrolling();
+            lyrics.innerHTML = `
+                <div style="padding: 20px 0; text-align: center;">
+                    <p class="help" style="font-size: 14px; color: #053d54; margin-bottom: 20px;">
+                        Loading song image...
+                    </p>
+                </div>
+            `;
+            inputPage.style.display = "none";
+            prompter.classList.add("image-mode");
+            prompter.style.display = "block";
+
+            const { ZipReader, HttpReader, Uint8ArrayWriter } =
+                await import("https://cdn.jsdelivr.net/npm/@zip.js/zip.js@2.24.0/index.min.js");
+            const zipReader = new ZipReader(
+                new HttpReader(proxyUrl, { useRangeHeader: true, forceRangeRequests: true })
+            );
+            let imageData;
+            try {
+                const entries = await zipReader.getEntries();
+                const archivePath = filePath.replace(/\.webp$/i, ".avif");
+                const songEntry = entries.find(entry => entry.filename === archivePath);
+                if (!songEntry) throw new Error("Song image was not found inside the ZIP: " + archivePath);
+                imageData = await songEntry.getData(new Uint8ArrayWriter());
+            } finally {
+                await zipReader.close();
+            }
+
+            const extension = filePath.split(".").pop().toLowerCase();
+            const imageTypes = { png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg", webp: "image/webp", avif: "image/avif" };
+            const imageType = imageTypes[extension] || "application/octet-stream";
+            const imageUrl = URL.createObjectURL(new Blob([imageData], { type: imageType }));
+            lyrics.innerHTML = `
+                <div class="image-view">
+                    <img class="full-song-image" src="${imageUrl}" alt="${cleanTitle}">
+                </div>
+            `;
+            lyrics.scrollTop = 0;
+        } catch (loadErr) {
+            console.error("Failed to load chosen song:", loadErr);
+            alert("Could not load the requested song file.");
+            prompter.classList.remove("image-mode");
+            prompter.style.display = "none";
+            inputPage.style.display = "flex";
+        }
+    }
+    // Fast, lightweight search index loading without downloading whole archive
+    async function loadIndex() {
+        try {
+            const response = await fetch('songs.json');
+            if (!response.ok) throw new Error("HTTP error " + response.status);
+            songIndex = await response.json();
+            searchInput.placeholder = `🔍 Search ${songIndex.length} songs (e.g. 365)...`;
+        } catch (err) {
+            console.error("Index load error:", err);
+            searchInput.placeholder = "Search index failed to load...";
+        }
+    }
+
+    loadIndex();
+
+    searchInput.addEventListener("input", function() {
+        const query = this.value.trim().toLowerCase();
+        resultsList.innerHTML = "";
+        
+        if (!query || songIndex.length === 0) {
+            resultsList.style.display = "none";
+            return;
+        }
+
+        const matches = songIndex.filter(song => {
+            const titleStr = typeof song === 'string' ? song : (song.title || '');
+            return titleStr.toLowerCase().includes(query);
+        }).slice(0, 10);
+        
+        if (matches.length === 0) {
+            resultsList.style.display = "none";
+            return;
+        }
+
+        matches.forEach(match => {
+            const cleanTitle = typeof match === 'string' 
+                ? match.split('/').pop().replace(/\.[^/.]+$/, "")
+                : match.title;
+
+            const filePath = typeof match === 'string' ? match : (match.filename || match.path);
+
+            const li = document.createElement("li");
+            li.textContent = cleanTitle;
+            li.addEventListener("click", function() {
+                const songUrl = new URL(window.location.href);
+                songUrl.hash = "song=" + encodeURIComponent(filePath);
+                const songTab = window.open(songUrl.toString(), "_blank");
+                if (!songTab) alert("Allow pop-ups to open the song in a new tab.");
+            });
+                        resultsList.appendChild(li);
+        });
+
+        resultsList.style.display = "block";
+    });
+
+    document.addEventListener("click", function(e) {
+        if (e.target !== searchInput && e.target !== resultsList) {
+            resultsList.style.display = "none";
+        }
+    });
+
+    // SAVE JPG readiness
+    let preparedText = "";
+    let prepareTimer = null;
+
+    function normalizeText() {
+        return input.value
+            .replace(/\r\n/g, "\n")
+            .replace(/\r/g, "\n")
+            .replace(/'/g, "’")
+            .trim();
+    }
+
+    function setSaveNotReady() {
+        saveJpgButton.disabled = true;
+        saveJpgButton.classList.remove("save-ready");
+        saveJpgButton.classList.add("save-not-ready");
+        saveJpgButton.title = "Reloading lyrics — please wait";
+    }
+
+    function setSaveReady(text) {
+        preparedText = text;
+        saveJpgButton.disabled = !text;
+        saveJpgButton.classList.remove("save-not-ready");
+        saveJpgButton.classList.add("save-ready");
+        saveJpgButton.title = text ? "Save the latest lyrics as a JPG" : "Paste lyrics first";
+    }
+
+    function reloadForJpgSave() {
+        const latest = normalizeText();
+        setSaveNotReady();
+        clearTimeout(prepareTimer);
+
+        prepareTimer = setTimeout(function () {
+            requestAnimationFrame(function () {
+                const afterReload = normalizeText();
+                if (afterReload !== latest) {
+                    reloadForJpgSave();
+                    return;
+                }
+                setSaveReady(afterReload);
+            });
+        }, 180);
+    }
+
+    // ============================================================
+    // CONTROLS
+    // ============================================================
+
+    let speed = 20;
+    let direction = 2; // 1 = UP, 2 = DOWN
+    let isMoving = false;
+    let animationFrame = null;
+    let lastTime = 0;
+    let fastScroll = false;
+    const arrowSpeed = 30;
+    let scrollMode = "none";
+
+    const speedMap = {
+        97: 15,  98: 30,  99: 50, 100: 80, 101: 120,
+        102: 250, 103: 320, 104: 400, 105: 500,
+        49: 15,  50: 30,  51: 50, 52: 80, 53: 120,
+        54: 250, 55: 320, 56: 400, 57: 500
+    };
+
+    function stopScrolling() {
+        isMoving = false;
+        if (animationFrame !== null) {
+            cancelAnimationFrame(animationFrame);
+            animationFrame = null;
+        }
+        lastTime = 0;
+    }
+
+    function Loop(timestamp) {
+        if (!isMoving) {
+            animationFrame = null;
+            lastTime = 0;
+            return;
+        }
+
+        if (!lastTime) lastTime = timestamp;
+        const delta = Math.min(timestamp - lastTime, 50);
+        lastTime = timestamp;
+
+        const pixelsPerSecond = speed * 5 * (fastScroll ? 12 : 1);
+        const movement = pixelsPerSecond * (delta / 1000);
+        const signedMovement = (direction === 2) ? movement : -movement;
+
+        const maxScroll = Math.max(0, lyrics.scrollHeight - lyrics.clientHeight);
+        const nextPosition = Math.max(
+            0,
+            Math.min(maxScroll, lyrics.scrollTop + signedMovement)
+        );
+
+        lyrics.scrollTop = nextPosition;
+
+        if (nextPosition <= 0 && direction === 1) {
+            stopScrolling();
+            return;
+        }
+
+        if (nextPosition >= maxScroll && direction === 2) {
+            stopScrolling();
+            return;
+        }
+
+        animationFrame = requestAnimationFrame(Loop);
+    }
+
+    function startScrolling() {
+        if (isMoving) {
+            stopScrolling();
+        }
+
+        isMoving = true;
+        lastTime = 0;
+        animationFrame = requestAnimationFrame(Loop);
+    }
+
+    function openOutputTab() {
+        const raw = normalizeText();
+        if (!raw) {
+            input.focus();
+            return;
+        }
+
+        const baseUrl = window.location.href.split("#")[0];
+        const outputUrl = baseUrl + "#output=" + encodeURIComponent(raw);
+        const outputTab = window.open(outputUrl, "_blank");
+        if (!outputTab) {
+            alert("QuickPrompter could not open the output tab. Please allow pop-ups for this file.");
+        }
+    }
+
+    function buildPrompter() {
+        prompter.classList.remove("image-mode");
+        const raw = input.value
+            .replace(/\r\n/g, "\n")
+            .replace(/\r/g, "\n")
+            .replace(/'/g, "’")
+            .trim();
+
+        if (!raw) {
+            input.focus();
+            return;
+        }
+
+        const blocks = raw.split(/\n\s*\n+/);
+
+        let output = `
+            <p class="help">
+                HOLD ARROW UP or DOWN to scroll manually.<br>
+                Press 1–9 to start/change automatic scroll speed.<br>
+                Press ARROW DOWN once to stop automatic scrolling.<br>
+                Press SPACE / ENTER / 0 to stop.<br>
+                Press CTRL + B to return to the Home screen.<br>
+                Press ESC to return to the top.
+            </p>
+        `;
+
+        for (const block of blocks) {
+            const lines = block.split("\n");
+            output += "<p>" +
+                lines.map(escapeHTML).join("<br>") +
+                "</p>";
+        }
+
+        output += `
+            <p class="end-space">
+                CLICK CTRL + B TO RETURN TO THE HOME SCREEN
+            </p>
+        `;
+
+        lyrics.innerHTML = output;
+
+        stopScrolling();
+        inputPage.style.display = "none";
+        prompter.style.display = "block";
+        lyrics.scrollTop = 0;
+    }
+
+    function escapeHTML(text) {
+        return text
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    function savePrompterAsJPG() {
+        const raw = normalizeText();
+        if (!raw || saveJpgButton.disabled || preparedText !== raw) {
+            return;
+        }
+
+        const exportWidth = 1280;
+        const basisScale = exportWidth / 355;
+        const fontSize = 24 * basisScale;
+        const lineHeight = 29 * basisScale;
+        const paragraphGap = 30 * basisScale;
+        const topPadding = 20 * basisScale;
+        const bottomPadding = 210 * basisScale;
+        const textWidth = 315 * basisScale;
+
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
+        if (!ctx) {
+            alert("Your browser could not create the JPG canvas.");
+            return;
+        }
+
+        const blocks = raw.split(/\n\s*\n+/);
+
+        ctx.font = `bold ${fontSize}px Georgia, serif`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "top";
+
+        function wrapLine(line) {
+            if (!line.trim()) return [""];
+
+            const words = line.trim().split(/\s+/);
+            const wrapped = [];
+            let current = "";
+
+            for (const word of words) {
+                const test = current ? current + " " + word : word;
+
+                if (ctx.measureText(test).width <= textWidth) {
+                    current = test;
+                } else {
+                    if (current) wrapped.push(current);
+                    current = word;
+                }
+            }
+
+            if (current) wrapped.push(current);
+            return wrapped.length ? wrapped : [""];
+        }
+
+        const paragraphs = blocks.map(block => {
+            const lines = [];
+            for (const originalLine of block.split("\n")) {
+                lines.push(...wrapLine(originalLine));
+            }
+            return lines;
+        });
+
+        let contentHeight = topPadding;
+        for (const paragraph of paragraphs) {
+            contentHeight += paragraph.length * lineHeight;
+            contentHeight += paragraphGap;
+        }
+        contentHeight += bottomPadding;
+
+        canvas.width = exportWidth;
+        canvas.height = Math.ceil(contentHeight);
+
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+
+        const gradient = ctx.createLinearGradient(0, 0, exportWidth, 0);
+        gradient.addColorStop(0, "#31b8ed");
+        gradient.addColorStop(0.30, "#ddf1f9");
+        gradient.addColorStop(0.50, "#feffff");
+        gradient.addColorStop(0.70, "#ddf1f9");
+        gradient.addColorStop(1, "#31b8ed");
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, exportWidth, contentHeight);
+
+        ctx.fillStyle = "#000000";
+        ctx.font = `bold ${fontSize}px Georgia, serif`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "top";
+
+        let y = topPadding;
+        const centerX = exportWidth / 2;
+
+        for (const paragraph of paragraphs) {
+            for (const line of paragraph) {
+                if (line.trim() !== "") {
+                    ctx.fillText(line, centerX, y);
+                }
+                y += lineHeight;
+            }
+            y += paragraphGap;
+        }
+
+        try {
+            const jpgData = canvas.toDataURL("image/jpeg", 1.0);
+            const link = document.createElement("a");
+            const title = (raw.split(/\n/)[0] || "prompter")
+                .replace(/[^a-z0-9 _-]/gi, "")
+                .trim()
+                .replace(/\s+/g, "_") || "prompter";
+
+            link.download = title + ".jpg";
+            link.href = jpgData;
+            link.style.display = "none";
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+        } catch (err) {
+            console.error("JPG export failed:", err);
+            alert("The JPG could not be created.");
+        }
+    }
+
+    document.addEventListener("keydown", function (e) {
+        if (prompter.style.display !== "block") return;
+
+        const key = e.keyCode;
+
+        if (e.ctrlKey && (key === 38 || key === 40)) {
+            e.preventDefault();
+            fastScroll = true;
+            direction = (key === 38) ? 1 : 2;
+            speed = arrowSpeed;
+            scrollMode = "arrow";
+            if (!isMoving) startScrolling();
+            return;
+        }
+
+        if (e.ctrlKey && (key === 66 || e.key.toLowerCase() === "b")) {
+            e.preventDefault();
+            stopScrolling();
+            scrollMode = "none";
+            prompter.classList.remove("image-mode");
+            prompter.style.display = "none";
+            inputPage.style.display = "flex";
+            input.focus();
+            return;
+        }
+
+        if (key === 32 || key === 13 || key === 96 || key === 48) {
+            e.preventDefault();
+            stopScrolling();
+            scrollMode = "none";
+            return;
+        }
+
+        if (speedMap[key]) {
+            e.preventDefault();
+            speed = speedMap[key];
+            scrollMode = "number";
+            fastScroll = false;
+
+            if (!isMoving) {
+                direction = 2;
+                startScrolling();
+            }
+            return;
+        }
+
+        if (key === 38) {
+            e.preventDefault();
+            fastScroll = false;
+            if (!e.repeat) {
+                speed = arrowSpeed;
+                scrollMode = "arrow";
+                direction = 1;
+                startScrolling();
+            }
+            return;
+        }
+
+        if (key === 40) {
+            e.preventDefault();
+            fastScroll = false;
+            if (!e.repeat) {
+                if (isMoving && scrollMode === "number") {
+                    stopScrolling();
+                    scrollMode = "none";
+                } else if (!isMoving) {
+                    speed = arrowSpeed;
+                    scrollMode = "arrow";
+                    direction = 2;
+                    startScrolling();
+                }
+            }
+            return;
+        }
+    });
+
+    document.addEventListener("keyup", function (e) {
+        if (prompter.style.display !== "block") return;
+
+        if (e.keyCode === 38 || e.keyCode === 40) {
+            e.preventDefault();
+            fastScroll = false;
+            stopScrolling();
+            scrollMode = "none";
+            return;
+        }
+
+        if (e.keyCode === 27) {
+            e.preventDefault();
+            stopScrolling();
+
+            lyrics.scrollTo({
+                top: 0,
+                behavior: "smooth"
+            });
+        }
+    });
+
+    prompter.addEventListener("click", function (e) {
+        if (e.target === goButton) return;
+        stopScrolling();
+    });
+
+    goButton.addEventListener("click", openOutputTab);
+    saveJpgButton.addEventListener("click", function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        savePrompterAsJPG();
+    });
+
+    input.addEventListener("input", reloadForJpgSave);
+    reloadForJpgSave();
+
+    input.addEventListener("keydown", function (e) {
+        if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
+            e.preventDefault();
+            openOutputTab();
+        }
+    });
+
+    if (window.location.hash.startsWith("#song=")) {
+        try {
+            const filePath = decodeURIComponent(window.location.hash.slice("#song=".length));
+            const cleanTitle = filePath.split("/").pop().replace(/\.[^/.]+$/, "");
+            showLibrarySong(filePath, cleanTitle);
+        } catch (error) {
+            console.error("Could not open the selected song:", error);
+        }
+    }
+    if (window.location.hash.startsWith("#output=")) {
+        try {
+            input.value = decodeURIComponent(window.location.hash.slice("#output=".length));
+            reloadForJpgSave();
+            buildPrompter();
+        } catch (error) {
+            console.error("Could not load QuickPrompter output text:", error);
+        }
+    }
+})();
+</script>
+
+</body></html>
