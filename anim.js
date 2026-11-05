@@ -15,10 +15,10 @@
         let lastTime = 0;
 
         const speedMap = {
-            97: 30, 98: 40, 99: 45, 100: 50, 101: 55,
-            102: 60, 103: 65, 104: 70, 105: 75,
-            49: 30, 50: 40, 51: 45, 52: 50, 53: 55,
-            54: 60, 55: 65, 56: 70, 57: 75
+            97: 30, 98: 40, 99: 60, 100: 80, 101: 100,
+            102: 120, 103: 140, 104: 160, 105: 180,
+            49: 30, 50: 40, 51: 60, 52: 80, 53: 100,
+            54: 120, 55: 140, 56: 160, 57: 180
         };
 
         function stopScrolling() {
@@ -38,8 +38,7 @@
                 return;
             }
 
-            if (!lastTime) lastTime = timestamp;
-            const delta = Math.min(timestamp - lastTime, 50);
+            const delta = Math.min(Math.max(timestamp - lastTime, 0), 50);
             lastTime = timestamp;
 
             // Keep key 1 at its previous speed; keys 2–9 rise in gradual steps.
@@ -59,7 +58,7 @@
         function startScrolling() {
             if (isMoving) return;
             isMoving = true;
-            lastTime = 0;
+            lastTime = performance.now();
             animationFrame = requestAnimationFrame(loop);
         }
 
