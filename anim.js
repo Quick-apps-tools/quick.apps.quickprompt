@@ -42,8 +42,8 @@
             const delta = Math.min(timestamp - lastTime, 50);
             lastTime = timestamp;
 
-            // Same speed scale as the supplied prompter, applied to #lyrics.
-            const movement = speed * 5 * (delta / 1000);
+            // Half the previous speed while keeping frame-based smooth scrolling.
+            const movement = speed * 2.5 * (delta / 1000);
             const signedMovement = direction === 2 ? movement : -movement;
             const maxScroll = Math.max(0, lyrics.scrollHeight - lyrics.clientHeight);
             const nextPosition = Math.max(0, Math.min(maxScroll, lyrics.scrollTop + signedMovement));
