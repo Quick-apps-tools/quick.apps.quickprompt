@@ -7,7 +7,7 @@
         const prompter = options.prompter;
         const onHome = options.onHome || function () {};
 
-        let speed = 20;
+        let speed = 24; // Keeps held-arrow scrolling at its existing 60 px/s.
         let direction = 2; // 1 = up, 2 = down
         let isMoving = false;
         let scrollMode = "none"; // "arrow" while an arrow key is held; "auto" for number keys
@@ -15,10 +15,10 @@
         let lastTime = 0;
 
         const speedMap = {
-            97: 30, 98: 35, 99: 40, 100: 45, 101: 50,
-            102: 55, 103: 60, 104: 65, 105: 70,
-            49: 30, 50: 35, 51: 40, 52: 45, 53: 50,
-            54: 55, 55: 60, 56: 65, 57: 70
+            97: 30, 98: 40, 99: 45, 100: 50, 101: 55,
+            102: 60, 103: 65, 104: 70, 105: 75,
+            49: 30, 50: 40, 51: 45, 52: 50, 53: 55,
+            54: 60, 55: 65, 56: 70, 57: 75
         };
 
         function stopScrolling() {
@@ -42,7 +42,7 @@
             const delta = Math.min(timestamp - lastTime, 50);
             lastTime = timestamp;
 
-            // Half the previous speed while keeping frame-based smooth scrolling.
+            // Keep key 1 at its previous speed; keys 2–9 rise in gradual steps.
             const movement = speed * 2.5 * (delta / 1000);
             const signedMovement = direction === 2 ? movement : -movement;
             const maxScroll = Math.max(0, lyrics.scrollHeight - lyrics.clientHeight);
