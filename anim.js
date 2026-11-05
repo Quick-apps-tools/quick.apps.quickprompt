@@ -7,10 +7,9 @@
         const prompter = options.prompter;
         const onHome = options.onHome || function () {};
 
-        // These values preserve the current requested speeds: 1 = 75 px/s,
-        // 2 = 100 px/s, then 3–9 rise in 50 px/s steps.
-        let speed = 12; // arrow keys: 60 px/s
-        let direction = 2; // 1 = up, 2 = down
+        // Requested speed levels: 1 = 75 px/s, 2 = 100 px/s, 3–9 = 150–450 px/s.
+        let speed = 12; // Arrow keys: 60 px/s.
+        let direction = 2; // 1 = up, 2 = down.
         let isMoving = false;
         let scrollMode = "none";
 
@@ -27,26 +26,8 @@
             TweenMax.killTweensOf(lyrics);
         }
 
-        function continueAtConstantSpeed(target, remainingDistance) {
-            if (!isMoving) return;
-            if (remainingDistance < 1) {
-                isMoving = false;
-                scrollMode = "none";
-                return;
-            }
-
-            TweenMax.to(lyrics, remainingDistance / (speed * 5), {
-                scrollTo: { y: target, autoKill: false },
-                ease: Linear.easeNone,
-                overwrite: "all",
-                onComplete: function () {
-                    isMoving = false;
-                    scrollMode = "none";
-                }
-            });
-        }
-
-        function scrollAtCurrentSpeed(easeIntoStart) {
+        // One linear TweenMax scroll, matching the original prompter's Loop method.
+        function scrollAtCurrentSpeed() {
             TweenMax.killTweensOf(lyrics);
 
             const current = lyrics.scrollTop;
@@ -61,23 +42,14 @@
             }
 
             isMoving = true;
-            const pixelsPerSecond = speed * 5;
-            const rampDuration = 0.12;
-            const rampDistance = pixelsPerSecond * rampDuration / 2;
-
-            // Ease in only when starting from rest. Speed changes keep moving directly.
-            if (!easeIntoStart || distance <= rampDistance) {
-                continueAtConstantSpeed(target, distance);
-                return;
-            }
-
-            const rampTarget = current + (direction === 2 ? rampDistance : -rampDistance);
-            TweenMax.to(lyrics, rampDuration, {
-                scrollTo: { y: rampTarget, autoKill: false },
-                ease: Power2.easeIn,
+            const duration = distance / (speed * 5);
+            TweenMax.to(lyrics, duration, {
+                scrollTo: { y: target, autoKill: false },
+                ease: Linear.easeNone,
                 overwrite: "all",
                 onComplete: function () {
-                    continueAtConstantSpeed(target, distance - rampDistance);
+                    isMoving = false;
+                    scrollMode = "none";
                 }
             });
         }
@@ -99,7 +71,7 @@
                 TweenMax.to(lyrics, 0.7, {
                     scrollTo: { y: 0, autoKill: false },
                     ease: Power2.easeInOut,
-                    overwrite: "auto"
+                    overwrite: "all"
                 });
                 return;
             }
@@ -120,21 +92,19 @@
             if (speedMap[key]) {
                 event.preventDefault();
                 if (event.repeat) return;
-                const wasMoving = isMoving;
                 speed = speedMap[key];
                 direction = 2;
                 scrollMode = "auto";
-                scrollAtCurrentSpeed(!wasMoving);
+                scrollAtCurrentSpeed();
                 return;
             }
 
             if (key === 38 || key === 40) {
                 event.preventDefault();
                 if (event.repeat) return;
-                const wasMoving = isMoving;
                 direction = key === 38 ? 1 : 2;
                 scrollMode = "arrow";
-                scrollAtCurrentSpeed(!wasMoving);
+                scrollAtCurrentSpeed();
             }
         }
 
