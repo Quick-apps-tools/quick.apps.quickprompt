@@ -15,10 +15,10 @@
         let lastTime = 0;
 
         const speedMap = {
-            97: 30, 98: 60, 99: 100, 100: 140, 101: 190,
-            102: 250, 103: 320, 104: 400, 105: 500,
-            49: 30, 50: 60, 51: 100, 52: 140, 53: 190,
-            54: 250, 55: 320, 56: 400, 57: 500
+            97: 30, 98: 35, 99: 40, 100: 45, 101: 50,
+            102: 55, 103: 60, 104: 65, 105: 70,
+            49: 30, 50: 35, 51: 40, 52: 45, 53: 50,
+            54: 55, 55: 60, 56: 65, 57: 70
         };
 
         function stopScrolling() {
@@ -84,6 +84,13 @@
             if (key === 32 || key === 13 || key === 96 || key === 48) {
                 if (isMoving) stopScrolling();
                 event.preventDefault();
+                return;
+            }
+
+            // Arrow Down is the immediate stop key during number-key auto-scroll.
+            if (key === 40 && isMoving && scrollMode === "auto") {
+                event.preventDefault();
+                stopScrolling();
                 return;
             }
 
