@@ -51,6 +51,31 @@
         justify-content: center;
     }
 
+    .changelog-toggle-wrap {
+        margin: 12px auto 0;
+        text-align: center;
+    }
+
+    #changelogToggle {
+        padding: 6px 11px;
+        border: 0;
+        border-radius: 4px;
+        background: #176cf5;
+        color: #fff;
+        font-family: Arial, sans-serif;
+        font-size: 11px;
+        font-weight: bold;
+        cursor: pointer;
+    }
+
+    #changelogToggle:hover {
+        background: #0d5fe2;
+    }
+
+    #changelogPanel[hidden] {
+        display: none;
+    }
+
     .instruction-box {
         flex: 1;
         max-width: 505px;
@@ -494,7 +519,11 @@
 
     </div>
 
-    <div class="instruction-box" style="max-width: 1040px; margin: 20px auto 0;">
+    <div class="changelog-toggle-wrap">
+        <button id="changelogToggle" type="button" aria-expanded="false" aria-controls="changelogPanel">What’s New · v3.0</button>
+    </div>
+
+    <div id="changelogPanel" class="instruction-box" style="max-width: 1040px; margin: 10px auto 20px;" hidden>
         <div class="instruction-title">Version 3.0 Changelog</div>
         <div class="instruction-step">
             <strong>Search multilingual lyrics.</strong> Find songs by title in the searchable library, with lyrics available in multiple languages.
@@ -539,6 +568,16 @@
     const searchInput = document.getElementById("librarySearchInput");
     const resultsList = document.getElementById("searchResultsList");
     const selectedSongLabel = document.getElementById("selectedSongLabel");
+    const changelogToggle = document.getElementById("changelogToggle");
+    const changelogPanel = document.getElementById("changelogPanel");
+
+    changelogToggle.addEventListener("click", function () {
+        const isOpen = this.getAttribute("aria-expanded") === "true";
+        this.setAttribute("aria-expanded", String(!isOpen));
+        changelogPanel.hidden = isOpen;
+        this.textContent = isOpen ? "What’s New · v3.0" : "Hide Changelog";
+        if (!isOpen) changelogPanel.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    });
 
     let songIndex = [];
 
