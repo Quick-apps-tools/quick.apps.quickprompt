@@ -27,6 +27,25 @@
             TweenMax.killTweensOf(lyrics);
         }
 
+        function continueAtConstantSpeed(target, remainingDistance) {
+            if (!isMoving) return;
+            if (remainingDistance < 1) {
+                isMoving = false;
+                scrollMode = "none";
+                return;
+            }
+
+            TweenMax.to(lyrics, remainingDistance / (speed * 5), {
+                scrollTo: { y: target, autoKill: false },
+                ease: Linear.easeNone,
+                overwrite: "all",
+                onComplete: function () {
+                    isMoving = false;
+                    scrollMode = "none";
+                }
+            });
+        }
+
         function scrollAtCurrentSpeed() {
             TweenMax.killTweensOf(lyrics);
 
@@ -42,14 +61,23 @@
             }
 
             isMoving = true;
-            const duration = distance / (speed * 5);
-            TweenMax.to(lyrics, duration, {
-                scrollTo: { y: target, autoKill: false },
-                ease: Linear.easeNone,
-                overwrite: "auto",
+            const pixelsPerSecond = speed * 5;
+            const rampDuration = 0.12;
+            const rampDistance = pixelsPerSecond * rampDuration / 2;
+
+            // Ease into motion so a single key press doesn't visibly kick the page.
+            if (distance <= rampDistance) {
+                continueAtConstantSpeed(target, distance);
+                return;
+            }
+
+            const rampTarget = current + (direction === 2 ? rampDistance : -rampDistance);
+            TweenMax.to(lyrics, rampDuration, {
+                scrollTo: { y: rampTarget, autoKill: false },
+                ease: Power2.easeIn,
+                overwrite: "all",
                 onComplete: function () {
-                    isMoving = false;
-                    scrollMode = "none";
+                    continueAtConstantSpeed(target, distance - rampDistance);
                 }
             });
         }
