@@ -46,7 +46,7 @@
             });
         }
 
-        function scrollAtCurrentSpeed() {
+        function scrollAtCurrentSpeed(easeIntoStart) {
             TweenMax.killTweensOf(lyrics);
 
             const current = lyrics.scrollTop;
@@ -65,8 +65,8 @@
             const rampDuration = 0.12;
             const rampDistance = pixelsPerSecond * rampDuration / 2;
 
-            // Ease into motion so a single key press doesn't visibly kick the page.
-            if (distance <= rampDistance) {
+            // Ease in only when starting from rest. Speed changes keep moving directly.
+            if (!easeIntoStart || distance <= rampDistance) {
                 continueAtConstantSpeed(target, distance);
                 return;
             }
@@ -120,19 +120,21 @@
             if (speedMap[key]) {
                 event.preventDefault();
                 if (event.repeat) return;
+                const wasMoving = isMoving;
                 speed = speedMap[key];
                 direction = 2;
                 scrollMode = "auto";
-                scrollAtCurrentSpeed();
+                scrollAtCurrentSpeed(!wasMoving);
                 return;
             }
 
             if (key === 38 || key === 40) {
                 event.preventDefault();
                 if (event.repeat) return;
+                const wasMoving = isMoving;
                 direction = key === 38 ? 1 : 2;
                 scrollMode = "arrow";
-                scrollAtCurrentSpeed();
+                scrollAtCurrentSpeed(!wasMoving);
             }
         }
 
