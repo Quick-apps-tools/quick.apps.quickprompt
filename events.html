@@ -25,6 +25,8 @@
         .event-poster { display: grid; place-items: center; width: 100%; aspect-ratio: 1.34 / 1; object-fit: cover; border: 4px solid var(--gold); border-radius: 38px; background: #969696; color: #333; font: 500 16px Poppins, Arial, sans-serif; }
         .event-name { margin: 14px 4px 28px; font: 800 clamp(17px, 1.65vw, 27px)/1.2 Gotham, Montserrat, Arial, sans-serif; }
         .event-open:hover .event-name { color: var(--blue); }
+        .card-lineup-label { margin: 0 0 8px; color: var(--gray); font: 400 clamp(16px, 1.5vw, 23px)/1.3 Poppins, Arial, sans-serif; }
+        .card-lineup { display: grid; gap: 8px; margin: 0; padding: 0 4px; color: var(--gray); font: 400 clamp(14px, 1.25vw, 20px)/1.5 Poppins, Arial, sans-serif; list-style: none; }
         .empty-message { grid-column: 1 / -1; margin: 30px 0; color: var(--gray); text-align: center; font: 16px Poppins, Arial, sans-serif; }
         #eventDetail[hidden], #eventList[hidden] { display: none; }
         .detail { max-width: 760px; margin: 0 auto; text-align: center; }
@@ -42,6 +44,8 @@
             .back-home { position: static; display: inline-block; margin-top: 12px; }
             .events-grid { grid-template-columns: 1fr; gap: 32px; }
             .event-name { font-size: 22px; margin-bottom: 10px; }
+            .card-lineup-label { font-size: 19px; }
+            .card-lineup { font-size: 16px; }
             .event-poster, .detail-poster { border-radius: 28px; }
             .page.detail-mode { width: min(100% - 32px, 430px); padding-top: 18px; }
             .detail h2 { margin-bottom: 14px; }
@@ -106,6 +110,20 @@
                 title.textContent = event.title;
                 link.append(title);
                 article.append(link);
+
+                if (event.songs && event.songs.length) {
+                    const lineupLabel = document.createElement("p");
+                    lineupLabel.className = "card-lineup-label";
+                    lineupLabel.textContent = "LINE UP:";
+                    const lineup = document.createElement("ul");
+                    lineup.className = "card-lineup";
+                    event.songs.forEach(function (song) {
+                        const item = document.createElement("li");
+                        item.textContent = song.title;
+                        lineup.append(item);
+                    });
+                    article.append(lineupLabel, lineup);
+                }
                 eventList.append(article);
             });
         }
