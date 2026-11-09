@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Events | QuickPrompter</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cardo&family=Montserrat:wght@700;800&family=Poppins:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root { --blue: #0750ff; --gold: #ffad00; --gray: #747474; }
+        * { box-sizing: border-box; }
+        body { margin: 0; background: #fff; color: #111; }
+        .page { width: min(100% - 64px, 1760px); margin: 0 auto; padding: 68px 0 56px; }
+        .page.detail-mode { padding-top: 20px; }
+        .page.detail-mode .page-header { display: none; }
+        .page-header { position: relative; margin: 0 30px 54px; }
+        h1 { margin: 0; color: var(--blue); font: 800 clamp(38px, 5vw, 62px)/1.05 Gotham, Montserrat, Arial, sans-serif; letter-spacing: .01em; }
+        .subtitle { margin: 4px 0 0; color: var(--blue); font: 400 clamp(16px, 2vw, 25px)/1.35 Cardo, Georgia, serif; letter-spacing: .025em; }
+        .back-home { position: absolute; top: 8px; right: 0; color: var(--blue); font: 500 14px/1.4 Poppins, Arial, sans-serif; text-decoration: none; }
+        .back-home:hover, .back-events:hover { text-decoration: underline; }
+        .events-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+        .event-card { min-width: 0; text-align: center; }
+        .event-open { display: block; color: inherit; text-decoration: none; }
+        .event-poster { display: grid; place-items: center; width: 100%; aspect-ratio: 1.34 / 1; object-fit: cover; border: 4px solid var(--gold); border-radius: 38px; background: #969696; color: #333; font: 500 16px Poppins, Arial, sans-serif; }
+        .event-name { margin: 14px 4px 28px; font: 800 clamp(17px, 1.65vw, 27px)/1.2 Gotham, Montserrat, Arial, sans-serif; }
+        .event-open:hover .event-name { color: var(--blue); }
+        .card-lineup-label { margin: 0 0 8px; color: var(--gray); font: 400 clamp(16px, 1.5vw, 23px)/1.3 Poppins, Arial, sans-serif; }
+        .card-lineup { display: grid; gap: 8px; margin: 0; padding: 0 4px; color: var(--gray); font: 400 clamp(14px, 1.25vw, 20px)/1.5 Poppins, Arial, sans-serif; list-style: none; }
+        .empty-message { grid-column: 1 / -1; margin: 30px 0; color: var(--gray); text-align: center; font: 16px Poppins, Arial, sans-serif; }
+        #eventDetail[hidden], #eventList[hidden] { display: none; }
+        .detail { max-width: 760px; margin: 0 auto; text-align: center; }
+        .detail h2 { margin: 0 0 18px; font: 800 clamp(26px, 3vw, 40px)/1.15 Gotham, Montserrat, Arial, sans-serif; }
+        .detail-poster { display: block; width: min(100%, 300px); aspect-ratio: 1.34 / 1; object-fit: cover; margin: 0 auto 18px; border: 4px solid var(--gold); border-radius: 28px; background: #969696; }
+        .lineup-label { margin: 0 0 8px; color: var(--gray); font: 400 clamp(18px, 1.8vw, 23px)/1.3 Poppins, Arial, sans-serif; }
+        .lineup-list { display: grid; gap: 7px; margin: 0; padding: 0; list-style: none; }
+        .lineup-list a, .lineup-list span { color: #1685ed; font: 400 clamp(16px, 1.6vw, 22px)/1.35 Poppins, Arial, sans-serif; text-decoration: none; }
+        .lineup-list a:hover { text-decoration: underline; }
+        .back-events { display: inline-block; margin: 18px 0 0; color: var(--blue); font: 500 15px Poppins, Arial, sans-serif; text-decoration: none; }
+        @media (max-width: 1050px) { .events-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 30px 18px; } .page-header { margin-bottom: 36px; } }
+        @media (max-width: 600px) {
+            .page { width: min(100% - 32px, 430px); padding-top: 28px; }
+            .page-header { margin: 0 0 28px; }
+            .back-home { position: static; display: inline-block; margin-top: 12px; }
+            .events-grid { grid-template-columns: 1fr; gap: 32px; }
+            .event-name { font-size: 22px; margin-bottom: 10px; }
+            .card-lineup-label { font-size: 19px; }
+            .card-lineup { font-size: 16px; }
+            .event-poster, .detail-poster { border-radius: 28px; }
+            .page.detail-mode { width: min(100% - 32px, 430px); padding-top: 18px; }
+            .detail h2 { margin-bottom: 14px; }
+            .detail-poster { width: min(100%, 280px); margin-bottom: 14px; }
+        }
+    </style>
+</head>
+<body>
+    <main class="page">
+        <header class="page-header">
+            <h1>EVENTS</h1>
+            <p class="subtitle">LYRICS PROMPTERS SETUP FOR MCGI NATIONAL EVENTS.</p>
+            <a class="back-home" href="index.html">Back to QuickPrompter</a>
+        </header>
+        <section id="eventList" class="events-grid" aria-label="MCGI national events">
+            <p class="empty-message">Event details will be posted here.</p>
+        </section>
+        <section id="eventDetail" class="detail" hidden></section>
+    </main>
+    <script>
+        const eventList = document.getElementById("eventList");
+        const eventDetail = document.getElementById("eventDetail");
+        let events = [];
+
+        function getEventFromHash() {
+            if (!location.hash.startsWith("#event=")) return null;
+            return decodeURIComponent(location.hash.slice(7));
+        }
+
+        function renderList() {
+            document.querySelector(".page").classList.remove("detail-mode");
+            eventDetail.hidden = true;
+            eventList.hidden = false;
+            eventList.replaceChildren();
+            if (!events.length) {
+                const empty = document.createElement("p");
+                empty.className = "empty-message";
+                empty.textContent = "Event details will be posted here.";
+                eventList.append(empty);
+                return;
+            }
+            events.forEach(function (event, index) {
+                const article = document.createElement("article");
+                article.className = "event-card";
+                const link = document.createElement("a");
+                link.className = "event-open";
+                link.href = "#event=" + encodeURIComponent(event.id || String(index));
+                if (event.poster) {
+                    const poster = document.createElement("img");
+                    poster.className = "event-poster";
+                    poster.src = event.poster;
+                    poster.alt = event.title + " event poster";
+                    link.append(poster);
+                } else {
+                    const poster = document.createElement("div");
+                    poster.className = "event-poster";
+                    poster.textContent = "EVENT POSTER";
+                    link.append(poster);
+                }
+                const title = document.createElement("h2");
+                title.className = "event-name";
+                title.textContent = event.title;
+                link.append(title);
+                article.append(link);
+
+                if (event.songs && event.songs.length) {
+                    const lineupLabel = document.createElement("p");
+                    lineupLabel.className = "card-lineup-label";
+                    lineupLabel.textContent = "LINE UP:";
+                    const lineup = document.createElement("ul");
+                    lineup.className = "card-lineup";
+                    event.songs.forEach(function (song) {
+                        const item = document.createElement("li");
+                        item.textContent = song.title;
+                        lineup.append(item);
+                    });
+                    article.append(lineupLabel, lineup);
+                }
+                eventList.append(article);
+            });
+        }
+
+        function renderDetail(event) {
+            document.querySelector(".page").classList.add("detail-mode");
+            eventList.hidden = true;
+            eventDetail.hidden = false;
+            eventDetail.replaceChildren();
+            const title = document.createElement("h2");
+            title.textContent = event.title;
+            eventDetail.append(title);
+            if (event.poster) {
+                const poster = document.createElement("img");
+                poster.className = "detail-poster";
+                poster.src = event.poster;
+                poster.alt = event.title + " event poster";
+                eventDetail.append(poster);
+            }
+            const label = document.createElement("p");
+            label.className = "lineup-label";
+            label.textContent = "LINE UP:";
+            eventDetail.append(label);
+            const list = document.createElement("ul");
+            list.className = "lineup-list";
+            (event.songs || []).forEach(function (song) {
+                const item = document.createElement("li");
+                if (song.image) {
+                    const link = document.createElement("a");
+                    link.href = "index.html#event-image=" + encodeURIComponent(song.image);
+                    link.target = "_blank";
+                    link.rel = "noopener";
+                    link.textContent = song.title;
+                    item.append(link);
+                } else if (song.path) {
+                    const link = document.createElement("a");
+                    link.href = "index.html#song=" + encodeURIComponent(song.path);
+                    link.target = "_blank";
+                    link.rel = "noopener";
+                    link.textContent = song.title;
+                    item.append(link);
+                } else {
+                    const text = document.createElement("span");
+                    text.textContent = song.title;
+                    item.append(text);
+                }
+                list.append(item);
+            });
+            eventDetail.append(list);
+            const back = document.createElement("a");
+            back.className = "back-events";
+            back.href = "#events";
+            back.textContent = "Back to Events";
+            eventDetail.append(back);
+        }
+
+        function showCurrentView() {
+            const id = getEventFromHash();
+            if (id === null || id === "events") { renderList(); return; }
+            const event = events.find(function (entry, index) { return (entry.id || String(index)) === id; });
+            if (event) renderDetail(event);
+            else renderList();
+        }
+
+        window.addEventListener("hashchange", showCurrentView);
+        fetch("events.json", { cache: "no-store" })
+            .then(function (response) { if (!response.ok) throw new Error("Could not load events"); return response.json(); })
+            .then(function (data) { events = Array.isArray(data) ? data : []; showCurrentView(); })
+            .catch(function (error) {
+                console.error(error);
+                eventList.innerHTML = '<p class="empty-message">Event details are temporarily unavailable.</p>';
+            });
+    </script>
+</body>
+</html>

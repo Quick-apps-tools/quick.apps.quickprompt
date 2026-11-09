@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Events Developer Mode</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cardo&family=Montserrat:wght@700;800&family=Poppins:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root { --blue: #0750ff; --gold: #ffad00; --gray: #747474; }
+        * { box-sizing: border-box; }
+        body { margin: 0; background: #fff; color: #111; font-family: Poppins, Arial, sans-serif; }
+        .page { width: min(100% - 64px, 1760px); margin: 0 auto; padding: 56px 0; }
+        header { display: flex; justify-content: space-between; align-items: flex-start; gap: 24px; margin: 0 30px 48px; }
+        .title { margin: 0; color: var(--blue); font: 800 clamp(38px, 5vw, 62px)/1.05 Gotham, Montserrat, Arial, sans-serif; }
+        .subtitle { margin: 4px 0 0; color: var(--blue); font: 400 clamp(16px, 2vw, 25px)/1.35 Cardo, Georgia, serif; }
+        .mode { margin: 0; color: var(--blue); font: 800 clamp(26px, 4vw, 58px)/1.1 Gotham, Montserrat, Arial, sans-serif; text-align: right; }
+        .cards { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+        .card { min-width: 0; text-align: center; }
+        .image-picker { position: relative; display: grid; place-items: center; width: 100%; aspect-ratio: 1.34 / 1; overflow: hidden; border: 4px solid var(--gold); border-radius: 38px; background: #969696; color: #333; cursor: pointer; }
+        .image-picker img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+        .image-picker .prompt { z-index: 1; pointer-events: none; font: 400 clamp(21px, 2.5vw, 40px)/1.2 Poppins, Arial, sans-serif; }
+        .image-picker .plus { display: block; margin-bottom: 12px; font-size: 52px; line-height: .9; }
+        .image-picker.has-image .prompt { display: none; }
+        .image-picker input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+        .event-title { width: 100%; margin: 14px 0 26px; padding: 4px; border: 0; border-bottom: 1px solid #ddd; color: #888; text-align: center; font: 800 clamp(17px, 1.65vw, 27px)/1.2 Gotham, Montserrat, Arial, sans-serif; }
+        .lineup-label { margin: 0 0 8px; color: var(--gray); font-size: clamp(16px, 1.5vw, 23px); }
+        .lineup-help { margin: 0 0 10px; color: #777; font: 12px Poppins, Arial, sans-serif; }
+        .song-list { display: grid; gap: 8px; }
+        .song-row { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 5px; }
+        .song-title { width: 100%; min-width: 0; padding: 7px 4px; border: 0; border-bottom: 1px solid #ddd; outline: 1px solid transparent; color: var(--gray); text-align: center; font: 400 clamp(14px, 1.25vw, 20px)/1.4 Poppins, Arial, sans-serif; }
+        .song-title:focus, .event-title:focus { outline: 1px solid #b8ccff; }
+        .upload-lyrics { padding: 6px 8px; border: 1px solid #c6d8ff; border-radius: 4px; background: #fff; color: var(--blue); font: 500 11px Poppins, Arial, sans-serif; cursor: pointer; white-space: nowrap; }
+        .lyrics-file { display: none; }
+        .lyrics-status { grid-column: 1 / -1; min-height: 17px; color: #777; font: 11px Poppins, Arial, sans-serif; }
+        .add-song { margin: 10px 0 0; padding: 6px 11px; border: 0; background: transparent; color: var(--blue); font: 500 13px Poppins, Arial, sans-serif; cursor: pointer; }
+        .remove { margin-top: 8px; padding: 6px 12px; border: 0; border-radius: 4px; background: #ededed; color: #555; cursor: pointer; }
+        .actions { display: flex; justify-content: center; align-items: center; gap: 12px; flex-wrap: wrap; margin: 34px 0 0; }
+        .button { border: 0; border-radius: 5px; padding: 11px 18px; background: var(--blue); color: white; font: 500 14px Poppins, Arial, sans-serif; cursor: pointer; }
+        .button:disabled { background: #999; cursor: not-allowed; }
+        .publish-key { width: min(100%, 280px); padding: 10px 12px; border: 1px solid #bbb; border-radius: 5px; font: 14px Poppins, Arial, sans-serif; }
+        .publish-note { width: 100%; margin: 2px 0 0; color: #666; text-align: center; font-size: 13px; }
+        .back { display: inline-block; margin-top: 18px; color: var(--blue); font-size: 14px; text-decoration: none; }
+        @media (max-width: 1050px) { .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 30px 18px; } }
+        @media (max-width: 600px) {
+            .page { width: min(100% - 32px, 430px); padding-top: 26px; }
+            header { display: block; margin: 0 0 28px; }
+            .mode { margin-top: 18px; text-align: left; }
+            .cards { grid-template-columns: 1fr; gap: 32px; }
+            .image-picker { border-radius: 28px; }
+            .event-title { font-size: 22px; margin-bottom: 18px; }
+            .lineup-label { font-size: 19px; }
+            .song-title { font-size: 16px; }
+        }
+    </style>
+</head>
+<body>
+    <main class="page">
+        <header>
+            <div>
+                <h1 class="title">EVENTS</h1>
+                <p class="subtitle">LYRICS PROMPTERS SETUP FOR MCGI NATIONAL EVENTS.</p>
+            </div>
+            <p class="mode">DEVELOPER MODE</p>
+        </header>
+
+        <section id="cards" class="cards" aria-label="Edit event cards"></section>
+        <div class="actions">
+            <button id="addEvent" class="button" type="button">+ Add Event</button>
+            <input id="publisherKey" class="publish-key" type="password" autocomplete="off" placeholder="Publisher key" aria-label="Publisher key">
+            <button id="publishEvents" class="button" type="button">Save &amp; Publish</button>
+            <p id="publishStatus" class="publish-note" role="status" aria-live="polite">Your publisher key is not saved in this page.</p>
+        </div>
+        <a class="back" href="events.html">Open public Events page</a>
+    </main>
+
+    <script>
+        const cards = document.getElementById("cards");
+        const publisherKey = document.getElementById("publisherKey");
+        const publishButton = document.getElementById("publishEvents");
+        const publishStatus = document.getElementById("publishStatus");
+        const publishEndpoint = "https://quickappsquickprompt.espinolajhonsimon11.workers.dev/publish-events";
+        function addSongRow(list, song = {}) {
+            const row = document.createElement("div");
+            row.className = "song-row";
+            row.dataset.imagePath = song.image || "";
+            row.dataset.legacyPath = song.path || "";
+            const input = document.createElement("input");
+            input.className = "song-title";
+            input.type = "text";
+            input.placeholder = "Enter line-up title";
+            input.value = song.title || "";
+            input.setAttribute("aria-label", "Line-up title");
+
+            const uploadLabel = document.createElement("label");
+            uploadLabel.className = "upload-lyrics";
+            uploadLabel.textContent = "Upload lyrics";
+            const file = document.createElement("input");
+            file.className = "lyrics-file";
+            file.type = "file";
+            file.accept = "image/avif,image/webp,image/png,image/jpeg";
+            file.setAttribute("aria-label", "Upload this song's lyric image");
+            uploadLabel.append(file);
+            const status = document.createElement("span");
+            status.className = "lyrics-status";
+            status.textContent = song.image ? "Lyrics image: " + song.image.split("/").pop() : (song.path ? "Existing library lyric; upload your own image to replace it." : "Upload this song’s lyric image before publishing.");
+            file.addEventListener("change", function () {
+                const selected = file.files && file.files[0];
+                if (!selected) return;
+                row._lyricFile = selected;
+                row.dataset.imagePath = "";
+                row.dataset.legacyPath = "";
+                status.textContent = "Selected: " + selected.name;
+            });
+            const remove = document.createElement("button");
+            remove.className = "remove";
+            remove.type = "button";
+            remove.textContent = "×";
+            remove.setAttribute("aria-label", "Remove song from event line-up");
+            remove.addEventListener("click", function () { row.remove(); });
+            row.append(input, uploadLabel, remove, status);
+            list.append(row);
+        }
+
+        function addEventCard(event = {}) {
+            const card = document.createElement("article");
+            card.className = "card";
+            card.dataset.id = event.id || crypto.randomUUID();
+            card.dataset.posterPath = event.poster || "";
+
+            const label = document.createElement("label");
+            label.className = "image-picker";
+            label.title = "Choose this event's poster image";
+            const prompt = document.createElement("span");
+            prompt.className = "prompt";
+            prompt.innerHTML = '<span class="plus">⊕</span>ADD IMAGE';
+            const file = document.createElement("input");
+            file.type = "file";
+            file.accept = "image/avif,image/webp,image/png,image/jpeg";
+            file.setAttribute("aria-label", "Choose event poster image");
+            if (event.poster) {
+                const image = document.createElement("img");
+                image.src = event.poster;
+                image.alt = "Event poster preview";
+                label.append(image);
+                label.classList.add("has-image");
+            }
+            file.addEventListener("change", function () {
+                const selected = file.files && file.files[0];
+                if (!selected) return;
+                let image = label.querySelector("img");
+                if (!image) {
+                    image = document.createElement("img");
+                    image.alt = "Event poster preview";
+                    label.prepend(image);
+                }
+                image.src = URL.createObjectURL(selected);
+                label.classList.add("has-image");
+                card._posterFile = selected;
+                card.dataset.posterPath = "";
+            });
+            label.append(prompt, file);
+
+            const title = document.createElement("input");
+            title.className = "event-title";
+            title.type = "text";
+            title.placeholder = "EDIT EVENT NAME";
+            title.value = event.title || "";
+            title.setAttribute("aria-label", "Event name");
+
+            const lineupLabel = document.createElement("p");
+            lineupLabel.className = "lineup-label";
+            lineupLabel.textContent = "LINE UP:";
+            const lineupHelp = document.createElement("p");
+            lineupHelp.className = "lineup-help";
+            lineupHelp.textContent = "Enter each song title and upload its lyric image.";
+            const songs = document.createElement("div");
+            songs.className = "song-list";
+            (event.songs || []).forEach(function (song) { addSongRow(songs, song); });
+            const addSong = document.createElement("button");
+            addSong.className = "add-song";
+            addSong.type = "button";
+            addSong.textContent = "+ Add line-up song";
+            addSong.addEventListener("click", function () { addSongRow(songs); });
+
+            const removeEvent = document.createElement("button");
+            removeEvent.className = "remove";
+            removeEvent.type = "button";
+            removeEvent.textContent = "Remove event";
+            removeEvent.addEventListener("click", function () { card.remove(); });
+
+            card.append(label, title, lineupLabel, lineupHelp, songs, addSong, removeEvent);
+            cards.append(card);
+        }
+
+        fetch("events.json", { cache: "no-store" })
+            .then(function (response) { if (!response.ok) throw new Error("Could not load events"); return response.json(); })
+            .then(function (data) {
+            const events = Array.isArray(data) ? data : [];
+            if (events.length) events.forEach(addEventCard);
+            else for (let i = 0; i < 4; i++) addEventCard();
+        }).catch(function (error) {
+            console.error(error);
+            for (let i = 0; i < 4; i++) addEventCard();
+        });
+
+        document.getElementById("addEvent").addEventListener("click", function () { addEventCard(); });
+
+        function fileToBase64(file) {
+            return file.arrayBuffer().then(function (buffer) {
+                const bytes = new Uint8Array(buffer);
+                let binary = "";
+                const chunkSize = 0x8000;
+                for (let offset = 0; offset < bytes.length; offset += chunkSize) {
+                    binary += String.fromCharCode.apply(null, bytes.subarray(offset, offset + chunkSize));
+                }
+                return btoa(binary);
+            });
+        }
+
+        function safeSlug(value) {
+            return value.toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g, "")
+                .replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 45) || "event";
+        }
+
+        publishButton.addEventListener("click", async function () {
+            const key = publisherKey.value;
+            if (!key) {
+                publishStatus.textContent = "Enter your publisher key first.";
+                publisherKey.focus();
+                return;
+            }
+
+            publishButton.disabled = true;
+            publishStatus.textContent = "Preparing event posters and lyric images…";
+            try {
+                const events = [];
+                const images = [];
+                for (const card of cards.querySelectorAll(".card")) {
+                    const title = card.querySelector(".event-title").value.trim();
+                    const id = card.dataset.id || crypto.randomUUID();
+                    const posterFile = card._posterFile;
+                    let poster = card.dataset.posterPath;
+
+                    const songRows = Array.from(card.querySelectorAll(".song-row"));
+                    const hasLineupData = songRows.some(function (row) {
+                        return row.querySelector(".song-title").value.trim() || row._lyricFile || row.dataset.imagePath || row.dataset.legacyPath;
+                    });
+                    if (!title && !posterFile && !poster && !hasLineupData) continue;
+
+                    if (posterFile) {
+                        const extensions = { "image/avif": "avif", "image/webp": "webp", "image/png": "png", "image/jpeg": "jpg" };
+                        const extension = extensions[posterFile.type];
+                        if (!extension) throw new Error("Use an AVIF, WebP, PNG, or JPEG poster image.");
+                        poster = "events/posters/" + safeSlug(title) + "-" + id.replace(/[^a-z0-9-]/gi, "").slice(0, 12) + "." + extension;
+                        images.push({ path: poster, contentBase64: await fileToBase64(posterFile) });
+                    }
+                    if (!title || !poster) throw new Error("Each event needs a name and a poster image.");
+
+                    const songs = [];
+                    for (let songIndex = 0; songIndex < songRows.length; songIndex++) {
+                        const row = songRows[songIndex];
+                        const songTitleValue = row.querySelector(".song-title").value.trim();
+                        const lyricFile = row._lyricFile;
+                        let imagePath = row.dataset.imagePath;
+                        const legacyPath = row.dataset.legacyPath;
+                        if (!songTitleValue && !lyricFile && !imagePath && !legacyPath) continue;
+                        if (!songTitleValue) throw new Error("Give each line-up lyric image a song title.");
+                        if (lyricFile) {
+                            const extensions = { "image/avif": "avif", "image/webp": "webp", "image/png": "png", "image/jpeg": "jpg" };
+                            const extension = extensions[lyricFile.type];
+                            if (!extension) throw new Error("Use an AVIF, WebP, PNG, or JPEG lyric image.");
+                            imagePath = "events/lyrics/" + safeSlug(title) + "-" + safeSlug(songTitleValue) + "-" + id.replace(/[^a-z0-9-]/gi, "").slice(0, 8) + "-" + songIndex + "." + extension;
+                            images.push({ path: imagePath, contentBase64: await fileToBase64(lyricFile) });
+                        }
+                        if (imagePath) songs.push({ title: songTitleValue, image: imagePath });
+                        else if (legacyPath) songs.push({ title: songTitleValue, path: legacyPath });
+                        else throw new Error('Upload the lyric image for "' + songTitleValue + '".');
+                    }
+                    events.push({ id: id, title: title, poster: poster, songs: songs });
+                }
+
+                publishStatus.textContent = "Publishing to GitHub…";
+                const response = await fetch(publishEndpoint, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json", "Authorization": "Bearer " + key },
+                    body: JSON.stringify({ events: events, images: images })
+                });
+                const result = await response.json().catch(function () { return {}; });
+                if (!response.ok) throw new Error(result.error || "GitHub rejected the update.");
+                publisherKey.value = "";
+                publishStatus.textContent = "Published to GitHub! Pages is deploying the updated Events page now.";
+            } catch (error) {
+                publishStatus.textContent = error.message || "Could not publish. Please try again.";
+            } finally {
+                publishButton.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>
