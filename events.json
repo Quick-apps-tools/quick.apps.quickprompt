@@ -3,6 +3,11 @@
     "id": "eca59bc2-a9b1-4dae-9e51-eb3171d2be19",
     "title": "PWD DAY",
     "poster": "events/posters/pwd-day-eca59bc2-a9b.jpg",
-    "songs": []
+    "songs": [
+      {
+        "title": "We'll Thank You",
+        "image": "events/lyrics/pwd-day-we-ll-thank-you-eca59bc2-0.jpg"
+      }
+    ]
   }
 ]
