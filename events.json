@@ -1,1 +1,21 @@
-[]
+[
+  {
+    "id": "eca59bc2-a9b1-4dae-9e51-eb3171d2be19",
+    "title": "MASS INDOCTRINATION",
+    "poster": "events/posters/mass-indoctrination-eca59bc2-a9b.png",
+    "songs": [
+      {
+        "title": "365 Days - EN, BP, ES",
+        "path": "Lyrics Tanging Awit MULTILANGUAGE/365 Days - EN, BP, ES.webp"
+      },
+      {
+        "title": "Adaptation - Deep in My Heart (Kristo Hesus Kong Hirang) - Fil, EN, BP, ES",
+        "path": "Lyrics Tanging Awit MULTILANGUAGE/Adaptation - Deep in My Heart (Kristo Hesus Kong Hirang) - Fil, EN, BP, ES.webp"
+      },
+      {
+        "title": "Ang Bayang Hinirang - Fil, EN, BP, ES",
+        "path": "Lyrics Tanging Awit MULTILANGUAGE/Ang Bayang Hinirang - Fil, EN, BP, ES.webp"
+      }
+    ]
+  }
+]
