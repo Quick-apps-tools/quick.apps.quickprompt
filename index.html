@@ -521,7 +521,7 @@
 
     <div class="changelog-toggle-wrap">
         <a href="events.html" target="_blank" rel="noopener" style="display: inline-block; padding: 6px 11px; border-radius: 4px; background: #176cf5; color: #fff; font-family: Arial, sans-serif; font-size: 11px; font-weight: bold; text-decoration: none;">Events</a>
-        <button id="changelogToggle" type="button" aria-expanded="false" aria-controls="changelogPanel">What’s New · v3.0</button>
+        <button id="changelogToggle" type="button" aria-expanded="false" aria-controls="changelogPanel">What’s New · v3.5</button>
     </div>
 
     <div id="changelogPanel" class="instruction-box" style="max-width: 1040px; margin: 10px auto 20px;" hidden>
@@ -577,7 +577,7 @@
         const isOpen = this.getAttribute("aria-expanded") === "true";
         this.setAttribute("aria-expanded", String(!isOpen));
         changelogPanel.hidden = isOpen;
-        this.textContent = isOpen ? "What’s New · v3.0" : "Hide Changelog";
+        this.textContent = isOpen ? "What’s New · v3.5" : "Hide Changelog";
         if (!isOpen) changelogPanel.scrollIntoView({ behavior: "smooth", block: "nearest" });
     });
 
