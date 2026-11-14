@@ -6,6 +6,14 @@
 <title>QuickPrompter</title>
 
 <style>
+    @font-face {
+        font-family: "Garamond";
+        src: url("fonts/garamond-gras-700.ttf") format("truetype");
+        font-style: normal;
+        font-weight: 700;
+        font-display: swap;
+    }
+
     * {
         box-sizing: border-box;
     }
@@ -39,7 +47,7 @@
         text-align: center;
         font-family: Arial, sans-serif;
         font-size: 25px;
-        font-weight: 800;
+        font-weight: bold;
         color: #080808;
     }
 
@@ -247,17 +255,21 @@
         width: 80%;
         position: relative;
         font-size: 7em;
-        font-weight: bold;
+        font-weight: 700;
         overflow-y: auto;
         overflow-x: hidden;
         text-align: center;
         background: none;
-        font-family: Georgia, serif;
+        font-family: "Garamond", Georgia, serif;
         scrollbar-width: none;
     }
 
     #lyrics::-webkit-scrollbar {
         display: none;
+    }
+
+    #prompter:not(.image-mode) #lyrics p {
+        filter: url(#garamond-square-thicken);
     }
 
     #lyrics .help {
@@ -454,11 +466,25 @@
 </head>
 
 <body>
+<svg aria-hidden="true" focusable="false" width="0" height="0" style="position:absolute;overflow:hidden">
+    <defs>
+        <filter id="garamond-square-thicken" x="-3%" y="-3%" width="106%" height="106%" color-interpolation-filters="sRGB">
+            <feMorphology in="SourceAlpha" operator="dilate" radius="1" result="expanded-alpha" />
+            <feFlood flood-color="#000000" result="black" />
+            <feComposite in="black" in2="expanded-alpha" operator="in" result="thickened-text" />
+            <feMerge>
+                <feMergeNode in="thickened-text" />
+                <feMergeNode in="SourceGraphic" />
+            </feMerge>
+        </filter>
+    </defs>
+</svg>
+
 <!-- QUICK PROMPT -->
 <section id="quickPrompt">
     <h1 class="quick-title">QuickPrompter</h1>
 
-    <div class="build-info">Date Created: October 1, 2026 &nbsp; | &nbsp; Version 3.5</div>
+    <div class="build-info">Date Created: October 1, 2026 &nbsp; | &nbsp; Version 3.0</div>
 
     <div class="main-container">
         
@@ -521,11 +547,11 @@
 
     <div class="changelog-toggle-wrap">
         <a href="events.html" target="_blank" rel="noopener" style="display: inline-block; padding: 6px 11px; border-radius: 4px; background: #176cf5; color: #fff; font-family: Arial, sans-serif; font-size: 11px; font-weight: bold; text-decoration: none;">Events</a>
-        <button id="changelogToggle" type="button" aria-expanded="false" aria-controls="changelogPanel">What’s New · v3.5</button>
+        <button id="changelogToggle" type="button" aria-expanded="false" aria-controls="changelogPanel">What’s New · v3.0</button>
     </div>
 
     <div id="changelogPanel" class="instruction-box" style="max-width: 1040px; margin: 10px auto 20px;" hidden>
-        <div class="instruction-title">Version 3.5 Changelog</div>
+        <div class="instruction-title">Version 3.0 Changelog</div>
         <div class="instruction-step">
             <strong>Search multilingual lyrics.</strong> Find songs by title in the searchable library, with lyrics available in multiple languages.
         </div>
@@ -541,10 +567,8 @@
         <div class="instruction-step">
             <strong>Read tall lyrics comfortably.</strong> Images fit the browser width and scroll vertically.
         </div>
-        <div class="instruction-step">
-            <strong>Smoother scrolling controls.</strong> Adjust scroll speed with number keys, and stop number-key scrolling immediately with Arrow Down.
         <div class="instruction-step" style="border-bottom: none;">
-            <strong>Events</strong> Setup prompters from the National Events.
+            <strong>Smoother scrolling controls.</strong> Adjust scroll speed with number keys, and stop number-key scrolling immediately with Arrow Down.
         </div>
     </div>
 </section>
@@ -577,7 +601,7 @@
         const isOpen = this.getAttribute("aria-expanded") === "true";
         this.setAttribute("aria-expanded", String(!isOpen));
         changelogPanel.hidden = isOpen;
-        this.textContent = isOpen ? "What’s New · v3.5" : "Hide Changelog";
+        this.textContent = isOpen ? "What’s New · v3.0" : "Hide Changelog";
         if (!isOpen) changelogPanel.scrollIntoView({ behavior: "smooth", block: "nearest" });
     });
 
@@ -890,7 +914,7 @@
             .replace(/'/g, "&#039;");
     }
 
-    function savePrompterAsJPG() {
+    async function savePrompterAsJPG() {
         const raw = normalizeText();
         if (!raw || saveJpgButton.disabled || preparedText !== raw) {
             return;
@@ -912,9 +936,12 @@
             return;
         }
 
+        await document.fonts.load(`700 ${fontSize}px "Garamond"`);
+        await document.fonts.ready;
+
         const blocks = raw.split(/\n\s*\n+/);
 
-        ctx.font = `bold ${fontSize}px Georgia, serif`;
+        ctx.font = `700 ${fontSize}px "Garamond", Georgia, serif`;
         ctx.textAlign = "center";
         ctx.textBaseline = "top";
 
@@ -970,17 +997,65 @@
         ctx.fillRect(0, 0, exportWidth, contentHeight);
 
         ctx.fillStyle = "#000000";
-        ctx.font = `bold ${fontSize}px Georgia, serif`;
+        ctx.font = `700 ${fontSize}px "Garamond", Georgia, serif`;
         ctx.textAlign = "center";
         ctx.textBaseline = "top";
 
         let y = topPadding;
         const centerX = exportWidth / 2;
+        const glyphCanvas = document.createElement("canvas");
+        glyphCanvas.width = exportWidth;
+        glyphCanvas.height = Math.ceil(fontSize * 1.5);
+        const glyphCtx = glyphCanvas.getContext("2d", { willReadFrequently: true });
+        const glyphTopPadding = 3;
+        glyphCtx.font = `700 ${fontSize}px "Garamond", Georgia, serif`;
+        glyphCtx.fillStyle = "#000000";
+        glyphCtx.textAlign = "center";
+        glyphCtx.textBaseline = "top";
+
+        function drawThickenedLine(line, top) {
+            glyphCtx.clearRect(0, 0, glyphCanvas.width, glyphCanvas.height);
+            glyphCtx.fillText(line, centerX, glyphTopPadding);
+
+            const imageData = glyphCtx.getImageData(0, 0, glyphCanvas.width, glyphCanvas.height);
+            const pixels = imageData.data;
+            const sourceAlpha = new Uint8Array(glyphCanvas.width * glyphCanvas.height);
+            for (let pixel = 0, alphaOffset = 3; pixel < sourceAlpha.length; pixel++, alphaOffset += 4) {
+                sourceAlpha[pixel] = pixels[alphaOffset];
+            }
+
+            const lineWidth = glyphCtx.measureText(line).width;
+            const left = Math.max(1, Math.floor(centerX - lineWidth / 2) - 2);
+            const right = Math.min(glyphCanvas.width - 2, Math.ceil(centerX + lineWidth / 2) + 2);
+
+            for (let py = 1; py < glyphCanvas.height - 1; py++) {
+                for (let px = left; px <= right; px++) {
+                    let maxAlpha = sourceAlpha[py * glyphCanvas.width + px];
+                    for (let dy = -1; dy <= 1; dy++) {
+                        for (let dx = -1; dx <= 1; dx++) {
+                            const neighborAlpha = sourceAlpha[(py + dy) * glyphCanvas.width + px + dx];
+                            if (neighborAlpha > maxAlpha) maxAlpha = neighborAlpha;
+                        }
+                    }
+
+                    const pixelIndex = (py * glyphCanvas.width + px) * 4;
+                    if (maxAlpha > pixels[pixelIndex + 3]) {
+                        pixels[pixelIndex] = 0;
+                        pixels[pixelIndex + 1] = 0;
+                        pixels[pixelIndex + 2] = 0;
+                        pixels[pixelIndex + 3] = maxAlpha;
+                    }
+                }
+            }
+
+            glyphCtx.putImageData(imageData, 0, 0);
+            ctx.drawImage(glyphCanvas, 0, top - glyphTopPadding);
+        }
 
         for (const paragraph of paragraphs) {
             for (const line of paragraph) {
                 if (line.trim() !== "") {
-                    ctx.fillText(line, centerX, y);
+                    drawThickenedLine(line, y);
                 }
                 y += lineHeight;
             }
