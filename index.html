@@ -1221,7 +1221,11 @@
             alert("QuickPrompter could not open the output tab. Please allow pop-ups for this file.");
             return;
         }
-        pendingPhotopeaOutputs.set(outputTab, { text: raw, ready: false });
+        // The new tab can send its ready message before window.open returns.
+        // Keep that ready state instead of replacing it with a stale false flag.
+        if (!pendingPhotopeaOutputs.has(outputTab)) {
+            pendingPhotopeaOutputs.set(outputTab, { text: raw, ready: false });
+        }
         if (photopeaPreviewText !== raw) queuePhotopeaRender(raw);
     }
 
