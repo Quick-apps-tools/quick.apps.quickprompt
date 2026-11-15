@@ -7,8 +7,8 @@
 
 <style>
     @font-face {
-        font-family: "Garamond";
-        src: url("fonts/garamond-gras-700.ttf") format("truetype");
+        font-family: "Garamond Bold Web";
+        src: url("fonts/garamond-bold.ttf") format("truetype");
         font-style: normal;
         font-weight: 700;
         font-display: swap;
@@ -260,16 +260,12 @@
         overflow-x: hidden;
         text-align: center;
         background: none;
-        font-family: "Garamond", Georgia, serif;
+        font-family: "Garamond Bold Web", Georgia, serif;
         scrollbar-width: none;
     }
 
     #lyrics::-webkit-scrollbar {
         display: none;
-    }
-
-    #prompter:not(.image-mode) #lyrics p {
-        filter: url(#garamond-square-thicken);
     }
 
     #lyrics .help {
@@ -466,20 +462,6 @@
 </head>
 
 <body>
-<svg aria-hidden="true" focusable="false" width="0" height="0" style="position:absolute;overflow:hidden">
-    <defs>
-        <filter id="garamond-square-thicken" x="-3%" y="-3%" width="106%" height="106%" color-interpolation-filters="sRGB">
-            <feMorphology in="SourceAlpha" operator="dilate" radius="1" result="expanded-alpha" />
-            <feFlood flood-color="#000000" result="black" />
-            <feComposite in="black" in2="expanded-alpha" operator="in" result="thickened-text" />
-            <feMerge>
-                <feMergeNode in="thickened-text" />
-                <feMergeNode in="SourceGraphic" />
-            </feMerge>
-        </filter>
-    </defs>
-</svg>
-
 <!-- QUICK PROMPT -->
 <section id="quickPrompt">
     <h1 class="quick-title">QuickPrompter</h1>
@@ -936,12 +918,12 @@
             return;
         }
 
-        await document.fonts.load(`700 ${fontSize}px "Garamond"`);
+        await document.fonts.load(`700 ${fontSize}px "Garamond Bold Web"`);
         await document.fonts.ready;
 
         const blocks = raw.split(/\n\s*\n+/);
 
-        ctx.font = `700 ${fontSize}px "Garamond", Georgia, serif`;
+        ctx.font = `700 ${fontSize}px "Garamond Bold Web", Georgia, serif`;
         ctx.textAlign = "center";
         ctx.textBaseline = "top";
 
@@ -997,65 +979,16 @@
         ctx.fillRect(0, 0, exportWidth, contentHeight);
 
         ctx.fillStyle = "#000000";
-        ctx.font = `700 ${fontSize}px "Garamond", Georgia, serif`;
+        ctx.font = `700 ${fontSize}px "Garamond Bold Web", Georgia, serif`;
         ctx.textAlign = "center";
         ctx.textBaseline = "top";
 
         let y = topPadding;
         const centerX = exportWidth / 2;
-        const glyphCanvas = document.createElement("canvas");
-        glyphCanvas.width = exportWidth;
-        glyphCanvas.height = Math.ceil(fontSize * 1.5);
-        const glyphCtx = glyphCanvas.getContext("2d", { willReadFrequently: true });
-        const glyphTopPadding = 3;
-        glyphCtx.font = `700 ${fontSize}px "Garamond", Georgia, serif`;
-        glyphCtx.fillStyle = "#000000";
-        glyphCtx.textAlign = "center";
-        glyphCtx.textBaseline = "top";
-
-        function drawThickenedLine(line, top) {
-            glyphCtx.clearRect(0, 0, glyphCanvas.width, glyphCanvas.height);
-            glyphCtx.fillText(line, centerX, glyphTopPadding);
-
-            const imageData = glyphCtx.getImageData(0, 0, glyphCanvas.width, glyphCanvas.height);
-            const pixels = imageData.data;
-            const sourceAlpha = new Uint8Array(glyphCanvas.width * glyphCanvas.height);
-            for (let pixel = 0, alphaOffset = 3; pixel < sourceAlpha.length; pixel++, alphaOffset += 4) {
-                sourceAlpha[pixel] = pixels[alphaOffset];
-            }
-
-            const lineWidth = glyphCtx.measureText(line).width;
-            const left = Math.max(1, Math.floor(centerX - lineWidth / 2) - 2);
-            const right = Math.min(glyphCanvas.width - 2, Math.ceil(centerX + lineWidth / 2) + 2);
-
-            for (let py = 1; py < glyphCanvas.height - 1; py++) {
-                for (let px = left; px <= right; px++) {
-                    let maxAlpha = sourceAlpha[py * glyphCanvas.width + px];
-                    for (let dy = -1; dy <= 1; dy++) {
-                        for (let dx = -1; dx <= 1; dx++) {
-                            const neighborAlpha = sourceAlpha[(py + dy) * glyphCanvas.width + px + dx];
-                            if (neighborAlpha > maxAlpha) maxAlpha = neighborAlpha;
-                        }
-                    }
-
-                    const pixelIndex = (py * glyphCanvas.width + px) * 4;
-                    if (maxAlpha > pixels[pixelIndex + 3]) {
-                        pixels[pixelIndex] = 0;
-                        pixels[pixelIndex + 1] = 0;
-                        pixels[pixelIndex + 2] = 0;
-                        pixels[pixelIndex + 3] = maxAlpha;
-                    }
-                }
-            }
-
-            glyphCtx.putImageData(imageData, 0, 0);
-            ctx.drawImage(glyphCanvas, 0, top - glyphTopPadding);
-        }
-
         for (const paragraph of paragraphs) {
             for (const line of paragraph) {
                 if (line.trim() !== "") {
-                    drawThickenedLine(line, y);
+                    ctx.fillText(line, centerX, y);
                 }
                 y += lineHeight;
             }
