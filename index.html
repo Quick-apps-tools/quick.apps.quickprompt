@@ -172,8 +172,45 @@
         font-weight: bold;
     }
 
-    .lyrics-input-wrap {
+    .editor-preview-layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        gap: 8px;
         padding: 4px 8px 7px;
+    }
+
+    .editor-column,
+    .preview-column {
+        min-width: 0;
+    }
+
+    .format-toolbar {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        height: 28px;
+        margin-bottom: 4px;
+        font-family: Arial, sans-serif;
+        font-size: 10px;
+        color: #555;
+    }
+
+    #italicButton {
+        min-width: 30px;
+        height: 25px;
+        border: 1px solid #9ec3ff;
+        border-radius: 3px;
+        background: #fff;
+        color: #176cf5;
+        font-family: Georgia, serif;
+        font-size: 15px;
+        font-style: italic;
+        font-weight: bold;
+        cursor: pointer;
+    }
+
+    #italicButton:hover {
+        background: #eaf2ff;
     }
 
     #lyricsInput {
@@ -193,6 +230,88 @@
 
     #lyricsInput:focus {
         border-color: #176cf5;
+    }
+
+    .preview-tab {
+        height: 28px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 4px;
+        background: #176cf5;
+        color: #fff;
+        font-family: Arial, sans-serif;
+        font-size: 11px;
+        font-weight: bold;
+    }
+
+    #livePreview {
+        width: 100%;
+        height: 280px;
+        overflow: auto;
+        padding: 8px 6px;
+        border: 2px solid #9ec3ff;
+        background: linear-gradient(to right, #31b8ed, #ddf1f9 30%, #fff 50%, #ddf1f9 70%, #31b8ed);
+        color: #000;
+        text-align: center;
+        font-family: "Garamond Bold Web", Georgia, serif;
+        font-size: 15px;
+        font-weight: 700;
+        line-height: 1.22;
+        overflow-wrap: anywhere;
+    }
+
+    #livePreview p {
+        margin: 0 0 12px;
+    }
+
+    #livePreview em {
+        font-style: italic;
+        font-weight: 700;
+    }
+
+    #livePreview .preview-placeholder {
+        color: #35505c;
+        font-family: Arial, sans-serif;
+        font-size: 11px;
+        font-weight: normal;
+    }
+
+    #livePreviewContent img {
+        display: block;
+        width: 100%;
+        height: auto;
+    }
+
+    #photopeaStatus {
+        min-height: 18px;
+        padding: 2px 4px;
+        color: #555;
+        font-family: Arial, sans-serif;
+        font-size: 9px;
+        text-align: center;
+    }
+
+    #photopeaEngine {
+        position: fixed;
+        left: -2px;
+        top: -2px;
+        width: 1px;
+        height: 1px;
+        border: 0;
+        opacity: 0;
+        pointer-events: none;
+    }
+
+    @media (max-width: 760px) {
+        .main-container {
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .instruction-box {
+            width: 100%;
+        }
     }
 
     .go-wrap {
@@ -475,7 +594,7 @@
             <div class="instruction-title">How to use</div>
 
             <div class="instruction-note">
-                Make sure you post plain text for best result
+                Select lyrics and use Italic; preview appears beside the editor.
             </div>
 
             <div class="instruction-step">
@@ -483,11 +602,28 @@
             </div>
 
             <div class="instruction-step">
-                <strong>2. CLICK</strong> GO to open the blue prompter.
+                <strong>2. SELECT</strong> text and click <em>Italic</em> if needed.
             </div>
 
-            <div class="lyrics-input-wrap">
-                <textarea id="lyricsInput" spellcheck="false" placeholder=""></textarea>
+            <div class="instruction-step">
+                <strong>3. CLICK</strong> GO to open the blue prompter.
+            </div>
+
+            <div class="editor-preview-layout">
+                <div class="editor-column">
+                    <div class="format-toolbar">
+                        <button id="italicButton" type="button" title="Italicize selected text" aria-label="Italicize selected text"><em>I</em></button>
+                        <span>Italic</span>
+                    </div>
+                    <textarea id="lyricsInput" spellcheck="false" placeholder="Paste lyrics here..."></textarea>
+                </div>
+                <div class="preview-column">
+                    <div class="preview-tab">Live Preview</div>
+                    <div id="photopeaStatus" role="status" aria-live="polite">Photopea template loads when you start typing.</div>
+                    <div id="livePreview" aria-live="polite">
+                        <div id="livePreviewContent"><p class="preview-placeholder">Your lyrics preview will appear here.</p></div>
+                    </div>
+                </div>
             </div>
 
             <div class="go-wrap">
@@ -562,6 +698,7 @@
 </section>
 
 <div id="status"></div>
+<iframe id="photopeaEngine" title="Photopea lyric renderer" aria-hidden="true" tabindex="-1"></iframe>
 
 <script src="TweenMax.min.js"></script>
 <script src="ScrollToPlugin.min.js"></script>
@@ -571,14 +708,31 @@
     const inputPage = document.getElementById("quickPrompt");
     const input = document.getElementById("lyricsInput");
     const goButton = document.getElementById("goButton");
+    const italicButton = document.getElementById("italicButton");
+    const livePreviewContent = document.getElementById("livePreviewContent");
     const prompter = document.getElementById("prompter");
     const lyrics = document.getElementById("lyrics");
     const saveJpgButton = document.getElementById("saveJpgButton");
+    const photopeaEngine = document.getElementById("photopeaEngine");
+    const photopeaStatus = document.getElementById("photopeaStatus");
     const searchInput = document.getElementById("librarySearchInput");
     const resultsList = document.getElementById("searchResultsList");
     const selectedSongLabel = document.getElementById("selectedSongLabel");
     const changelogToggle = document.getElementById("changelogToggle");
     const changelogPanel = document.getElementById("changelogPanel");
+    const PHOTOPEA_ORIGIN = "https://www.photopea.com";
+    const PHOTOPEA_PSD_URL = "https://raw.githubusercontent.com/quick-apps-tools/quick.apps.quickprompt/main/qp-assets/lyrics-template.psd";
+    const pendingPhotopeaOutputs = new Map();
+    let photopeaStarted = false;
+    let photopeaDocumentReady = false;
+    let photopeaTemplatePending = false;
+    let photopeaBusy = false;
+    let photopeaRequestedText = "";
+    let photopeaRenderingText = "";
+    let photopeaPreviewText = "";
+    let photopeaPreviewBlob = null;
+    let photopeaPreviewUrl = "";
+    let photopeaRenderTimer = null;
     changelogToggle.addEventListener("click", function () {
         const isOpen = this.getAttribute("aria-expanded") === "true";
         this.setAttribute("aria-expanded", String(!isOpen));
@@ -780,6 +934,235 @@
             .trim();
     }
 
+    function renderInlineMarkup(text) {
+        return escapeHTML(text).replace(/\*([^*\n]+)\*/g, "<em>$1</em>");
+    }
+
+    function parseInlineRuns(text) {
+        const runs = [];
+        const pattern = /\*([^*\n]+)\*/g;
+        let lastIndex = 0;
+        let match;
+
+        while ((match = pattern.exec(text)) !== null) {
+            if (match.index > lastIndex) {
+                runs.push({ text: text.slice(lastIndex, match.index), italic: false });
+            }
+            runs.push({ text: match[1], italic: true });
+            lastIndex = pattern.lastIndex;
+        }
+
+        if (lastIndex < text.length) {
+            runs.push({ text: text.slice(lastIndex), italic: false });
+        }
+        return runs.length ? runs : [{ text: "", italic: false }];
+    }
+
+    function renderLyricsBlocks(raw) {
+        return raw.split(/\n\s*\n+/).map(function (block) {
+            return "<p>" + block.split("\n").map(renderInlineMarkup).join("<br>") + "</p>";
+        }).join("");
+    }
+
+    function updateLivePreview() {
+        const raw = normalizeText();
+        if (raw && raw === photopeaPreviewText && photopeaPreviewUrl) {
+            livePreviewContent.innerHTML = "";
+            const image = document.createElement("img");
+            image.src = photopeaPreviewUrl;
+            image.alt = "Live lyrics preview rendered from the Photopea template";
+            livePreviewContent.appendChild(image);
+            return;
+        }
+        livePreviewContent.innerHTML = raw
+            ? renderLyricsBlocks(raw)
+            : '<p class="preview-placeholder">Your lyrics preview will appear here.</p>';
+    }
+
+    function startPhotopeaRenderer() {
+        if (photopeaStarted) return;
+        photopeaStarted = true;
+        photopeaStatus.textContent = "Loading your 34 MB Photopea template…";
+
+        const config = {
+            files: [PHOTOPEA_PSD_URL],
+            environment: { theme: 2, intro: false, vmode: 2 },
+            script: 'app.echoToOE("qp-template-ready");'
+        };
+        photopeaEngine.src = PHOTOPEA_ORIGIN + "/#" + encodeURIComponent(JSON.stringify(config));
+    }
+
+    function queuePhotopeaRender(text) {
+        photopeaRequestedText = text;
+        if (!text) return;
+        startPhotopeaRenderer();
+        photopeaStatus.textContent = photopeaDocumentReady
+            ? "Updating the Photopea preview…"
+            : "Loading your Photopea template…";
+        clearTimeout(photopeaRenderTimer);
+        photopeaRenderTimer = setTimeout(sendPhotopeaRender, 350);
+    }
+
+    function sendPhotopeaRender() {
+        if (!photopeaDocumentReady || photopeaBusy || !photopeaRequestedText) return;
+        if (photopeaPreviewBlob && photopeaPreviewText === photopeaRequestedText) {
+            sendPendingPhotopeaOutputs();
+            return;
+        }
+
+        photopeaBusy = true;
+        photopeaRenderingText = photopeaRequestedText;
+        const plainText = photopeaRenderingText.replace(/\*([^*\n]+)\*/g, "$1");
+        const textLiteral = JSON.stringify(plainText);
+        const script = `(function(){try{var d=app.activeDocument;function findTextLayer(list){for(var i=0;i<list.length;i++){var layer=list[i];if(layer.name==="LYRICS TEXT"){return layer;}if(layer.layers){var nested=findTextLayer(layer.layers);if(nested)return nested;}}return null;}var target=findTextLayer(d.layers);if(!target||!target.textItem){app.echoToOE("qp-error:Could not find the editable LYRICS TEXT layer in the PSD.");return;}target.textItem.contents=${textLiteral};d.saveToOE("png");}catch(e){app.echoToOE("qp-error:"+e.message);}})();`;
+        photopeaEngine.contentWindow.postMessage(script, PHOTOPEA_ORIGIN);
+    }
+
+    function showPhotopeaPreview(buffer) {
+        let bytes = buffer;
+        if (ArrayBuffer.isView(buffer)) {
+            bytes = buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength);
+        }
+        photopeaPreviewBlob = new Blob([bytes], { type: "image/png" });
+        photopeaPreviewText = photopeaRenderingText;
+        if (photopeaPreviewUrl) URL.revokeObjectURL(photopeaPreviewUrl);
+        photopeaPreviewUrl = URL.createObjectURL(photopeaPreviewBlob);
+        updateLivePreview();
+        photopeaStatus.textContent = "Photopea preview is ready.";
+    }
+
+    async function sendPendingPhotopeaOutputs() {
+        for (const [outputWindow, outputRequest] of pendingPhotopeaOutputs) {
+            if (!outputWindow || outputWindow.closed) {
+                pendingPhotopeaOutputs.delete(outputWindow);
+                continue;
+            }
+            if (!outputRequest.ready) continue;
+            const text = outputRequest.text;
+            if (text !== photopeaPreviewText || !photopeaPreviewBlob) continue;
+            const pngBuffer = await photopeaPreviewBlob.arrayBuffer();
+            if (outputWindow.closed) {
+                pendingPhotopeaOutputs.delete(outputWindow);
+                continue;
+            }
+            outputWindow.postMessage({ type: "qp-photopea-output", text: text, png: pngBuffer }, window.location.origin, [pngBuffer]);
+            pendingPhotopeaOutputs.delete(outputWindow);
+        }
+    }
+
+    function showPhotopeaPrompterOutput(buffer) {
+        if (!window.location.hash.startsWith("#output=")) return;
+        let bytes = buffer;
+        if (ArrayBuffer.isView(buffer)) {
+            bytes = buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength);
+        }
+        stopScrolling();
+        lyrics.innerHTML = "";
+        const imageView = document.createElement("div");
+        imageView.className = "image-view";
+        const image = document.createElement("img");
+        image.className = "full-song-image";
+        image.alt = "Photopea-rendered lyrics";
+        image.src = URL.createObjectURL(new Blob([bytes], { type: "image/png" }));
+        imageView.appendChild(image);
+        lyrics.appendChild(imageView);
+        prompter.classList.add("image-mode");
+        inputPage.style.display = "none";
+        enablePrompterWindowScroll();
+        prompter.style.display = "block";
+        window.scrollTo(0, 0);
+    }
+
+    window.addEventListener("message", function (event) {
+        if (event.origin === PHOTOPEA_ORIGIN && event.source === photopeaEngine.contentWindow) {
+            if (event.data === "qp-template-ready") {
+                photopeaTemplatePending = true;
+                photopeaStatus.textContent = "Template loaded. Preparing the renderer…";
+                return;
+            }
+            if (event.data === "done") {
+                if (photopeaTemplatePending) {
+                    photopeaTemplatePending = false;
+                    photopeaDocumentReady = true;
+                    photopeaStatus.textContent = "Template ready. Rendering your lyrics…";
+                    sendPhotopeaRender();
+                    return;
+                }
+                if (photopeaBusy) {
+                    photopeaBusy = false;
+                    if (photopeaPreviewText !== photopeaRenderingText) {
+                        photopeaStatus.textContent = "Photopea finished without returning a preview image.";
+                    } else {
+                        photopeaStatus.textContent = "Photopea preview is ready.";
+                        sendPendingPhotopeaOutputs();
+                    }
+                    if (photopeaRequestedText && photopeaRequestedText !== photopeaPreviewText) {
+                        sendPhotopeaRender();
+                    }
+                }
+                return;
+            }
+            if (typeof event.data === "string" && event.data.startsWith("qp-error:")) {
+                photopeaBusy = false;
+                photopeaStatus.textContent = event.data.slice("qp-error:".length);
+                console.error("Photopea template error:", event.data);
+                return;
+            }
+            if (event.data instanceof ArrayBuffer || ArrayBuffer.isView(event.data)) {
+                showPhotopeaPreview(event.data);
+            }
+            return;
+        }
+
+        if (event.origin === window.location.origin && event.source === window.opener && event.data && event.data.type === "qp-output-tab-ready") {
+            const outputText = event.data.text || "";
+            const outputRequest = pendingPhotopeaOutputs.get(event.source) || { text: outputText, ready: true };
+            outputRequest.text = outputText;
+            outputRequest.ready = true;
+            pendingPhotopeaOutputs.set(event.source, outputRequest);
+            if (photopeaPreviewText !== outputText) queuePhotopeaRender(outputText);
+            else sendPendingPhotopeaOutputs();
+            return;
+        }
+
+        if (event.origin === window.location.origin && event.source === window.opener && event.data && event.data.type === "qp-photopea-output") {
+            if (event.data.text === normalizeText()) showPhotopeaPrompterOutput(event.data.png);
+        }
+    });
+
+    function toggleItalicSelection() {
+        const value = input.value;
+        const start = input.selectionStart;
+        const end = input.selectionEnd;
+        const selected = value.slice(start, end);
+        let nextValue = value;
+        let nextStart = start;
+        let nextEnd = end;
+
+        if (!selected) {
+            nextValue = value.slice(0, start) + "**" + value.slice(end);
+            nextStart = nextEnd = start + 1;
+        } else if (value[start - 1] === "*" && value[end] === "*") {
+            nextValue = value.slice(0, start - 1) + selected + value.slice(end + 1);
+            nextStart = start - 1;
+            nextEnd = end - 1;
+        } else {
+            const lines = selected.split("\n");
+            const allItalic = lines.every(line => !line.trim() || (line.startsWith("*") && line.endsWith("*")));
+            const changed = lines.map(function (line) {
+                if (!line.trim()) return line;
+                return allItalic ? line.slice(1, -1) : "*" + line + "*";
+            }).join("\n");
+            nextValue = value.slice(0, start) + changed + value.slice(end);
+            nextEnd = start + changed.length;
+        }
+
+        input.value = nextValue;
+        input.focus();
+        input.setSelectionRange(nextStart, nextEnd);
+        input.dispatchEvent(new Event("input", { bubbles: true }));
+    }
+
     function setSaveNotReady() {
         saveJpgButton.disabled = true;
         saveJpgButton.classList.remove("save-ready");
@@ -836,7 +1219,10 @@
         const outputTab = window.open(outputUrl, "_blank");
         if (!outputTab) {
             alert("QuickPrompter could not open the output tab. Please allow pop-ups for this file.");
+            return;
         }
+        pendingPhotopeaOutputs.set(outputTab, { text: raw, ready: false });
+        if (photopeaPreviewText !== raw) queuePhotopeaRender(raw);
     }
 
     function buildPrompter() {
@@ -868,7 +1254,7 @@
         for (const block of blocks) {
             const lines = block.split("\n");
             output += "<p>" +
-                lines.map(escapeHTML).join("<br>") +
+                lines.map(renderInlineMarkup).join("<br>") +
                 "</p>";
         }
 
@@ -919,6 +1305,7 @@
         }
 
         await document.fonts.load(`700 ${fontSize}px "Garamond Bold Web"`);
+        await document.fonts.load("italic 700 " + fontSize + "px \"Garamond Bold Web\"");
         await document.fonts.ready;
 
         const blocks = raw.split(/\n\s*\n+/);
@@ -927,26 +1314,44 @@
         ctx.textAlign = "center";
         ctx.textBaseline = "top";
 
+        function setCanvasFont(italic) {
+            ctx.font = (italic ? "italic " : "") + "700 " + fontSize + "px \"Garamond Bold Web\", Georgia, serif";
+        }
+
         function wrapLine(line) {
-            if (!line.trim()) return [""];
+            if (!line.trim()) return [[]];
 
-            const words = line.trim().split(/\s+/);
+            const tokens = parseInlineRuns(line).flatMap(function (run) {
+                return (run.text.match(/\s+|\S+/g) || []).map(function (text) {
+                    return { text: text, italic: run.italic };
+                });
+            });
             const wrapped = [];
-            let current = "";
+            let current = [];
+            let currentWidth = 0;
 
-            for (const word of words) {
-                const test = current ? current + " " + word : word;
+            for (const token of tokens) {
+                setCanvasFont(token.italic);
+                const tokenWidth = ctx.measureText(token.text).width;
+                const isWhitespace = /^\s+$/.test(token.text);
 
-                if (ctx.measureText(test).width <= textWidth) {
-                    current = test;
-                } else {
-                    if (current) wrapped.push(current);
-                    current = word;
+                if (isWhitespace && current.length === 0) continue;
+                if (!isWhitespace && current.length && currentWidth + tokenWidth > textWidth) {
+                    while (current.length && /^\s+$/.test(current[current.length - 1].text)) {
+                        current.pop();
+                    }
+                    wrapped.push(current);
+                    current = [];
+                    currentWidth = 0;
                 }
+
+                if (isWhitespace && current.length === 0) continue;
+                current.push(token);
+                currentWidth += tokenWidth;
             }
 
-            if (current) wrapped.push(current);
-            return wrapped.length ? wrapped : [""];
+            if (current.length) wrapped.push(current);
+            return wrapped.length ? wrapped : [[]];
         }
 
         const paragraphs = blocks.map(block => {
@@ -987,8 +1392,19 @@
         const centerX = exportWidth / 2;
         for (const paragraph of paragraphs) {
             for (const line of paragraph) {
-                if (line.trim() !== "") {
-                    ctx.fillText(line, centerX, y);
+                if (line.length) {
+                    let lineWidth = 0;
+                    for (const token of line) {
+                        setCanvasFont(token.italic);
+                        lineWidth += ctx.measureText(token.text).width;
+                    }
+                    let x = centerX - lineWidth / 2;
+                    ctx.textAlign = "left";
+                    for (const token of line) {
+                        setCanvasFont(token.italic);
+                        ctx.fillText(token.text, x, y);
+                        x += ctx.measureText(token.text).width;
+                    }
                 }
                 y += lineHeight;
             }
@@ -1016,14 +1432,24 @@
     }
 
     goButton.addEventListener("click", openOutputTab);
+    italicButton.addEventListener("mousedown", function (event) {
+        event.preventDefault();
+    });
+    italicButton.addEventListener("click", toggleItalicSelection);
     saveJpgButton.addEventListener("click", function (e) {
         e.preventDefault();
         e.stopPropagation();
         savePrompterAsJPG();
     });
 
-    input.addEventListener("input", reloadForJpgSave);
+    input.addEventListener("input", function () {
+        reloadForJpgSave();
+        updateLivePreview();
+        const currentText = normalizeText();
+        if (currentText) queuePhotopeaRender(currentText);
+    });
     reloadForJpgSave();
+    updateLivePreview();
 
     input.addEventListener("keydown", function (e) {
         if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
@@ -1055,6 +1481,9 @@
             input.value = decodeURIComponent(window.location.hash.slice("#output=".length));
             reloadForJpgSave();
             buildPrompter();
+            if (window.opener) {
+                window.opener.postMessage({ type: "qp-output-tab-ready", text: normalizeText() }, window.location.origin);
+            }
         } catch (error) {
             console.error("Could not load QuickPrompter output text:", error);
         }
