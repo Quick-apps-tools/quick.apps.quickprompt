@@ -986,6 +986,7 @@
 
         const config = {
             files: [PHOTOPEA_PSD_URL],
+            resources: ["https://quick-apps-tools.github.io/quick.apps.quickprompt/fonts/garamond-bold.ttf"],
             environment: { theme: 2, intro: false, vmode: 2 },
             script: 'app.echoToOE("qp-template-ready");'
         };
@@ -1056,6 +1057,10 @@
         if (ArrayBuffer.isView(buffer)) {
             bytes = buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength);
         }
+        showPhotopeaPrompterImage(URL.createObjectURL(new Blob([bytes], { type: "image/png" })));
+    }
+
+    function showPhotopeaPrompterImage(imageUrl) {
         stopScrolling();
         lyrics.innerHTML = "";
         const imageView = document.createElement("div");
@@ -1063,7 +1068,7 @@
         const image = document.createElement("img");
         image.className = "full-song-image";
         image.alt = "Photopea-rendered lyrics";
-        image.src = URL.createObjectURL(new Blob([bytes], { type: "image/png" }));
+        image.src = imageUrl;
         imageView.appendChild(image);
         lyrics.appendChild(imageView);
         prompter.classList.add("image-mode");
@@ -1214,19 +1219,19 @@
             return;
         }
 
+        if (photopeaPreviewText !== raw || !photopeaPreviewUrl) {
+            queuePhotopeaRender(raw);
+            photopeaStatus.textContent = "Wait for the Photopea preview to finish, then click GO.";
+            return;
+        }
+
         const baseUrl = window.location.href.split("#")[0];
-        const outputUrl = baseUrl + "#output=" + encodeURIComponent(raw);
+        const outputUrl = baseUrl + "#photopea-output=" + encodeURIComponent(photopeaPreviewUrl);
         const outputTab = window.open(outputUrl, "_blank");
         if (!outputTab) {
             alert("QuickPrompter could not open the output tab. Please allow pop-ups for this file.");
             return;
         }
-        // The new tab can send its ready message before window.open returns.
-        // Keep that ready state instead of replacing it with a stale false flag.
-        if (!pendingPhotopeaOutputs.has(outputTab)) {
-            pendingPhotopeaOutputs.set(outputTab, { text: raw, ready: false });
-        }
-        if (photopeaPreviewText !== raw) queuePhotopeaRender(raw);
     }
 
     function buildPrompter() {
@@ -1480,7 +1485,14 @@
             console.error("Could not open the uploaded event lyrics image:", error);
         }
     }
-    if (window.location.hash.startsWith("#output=")) {
+    if (window.location.hash.startsWith("#photopea-output=")) {
+        try {
+            const imageUrl = decodeURIComponent(window.location.hash.slice("#photopea-output=".length));
+            showPhotopeaPrompterImage(imageUrl);
+        } catch (error) {
+            console.error("Could not open the Photopea-rendered lyrics image:", error);
+        }
+    } else if (window.location.hash.startsWith("#output=")) {
         try {
             input.value = decodeURIComponent(window.location.hash.slice("#output=".length));
             reloadForJpgSave();
