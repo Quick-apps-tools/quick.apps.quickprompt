@@ -619,7 +619,7 @@
                 </div>
                 <div class="preview-column">
                     <div class="preview-tab">Live Preview</div>
-                    <div id="photopeaStatus" role="status" aria-live="polite">Photopea template loads when you start typing.</div>
+                    <div id="photopeaStatus" role="status" aria-live="polite">Please try typing to load refresh the editor.</div>
                     <div id="livePreview" aria-live="polite">
                         <div id="livePreviewContent"><p class="preview-placeholder">Your lyrics preview will appear here.</p></div>
                     </div>
@@ -998,7 +998,7 @@
         if (!text) return;
         startPhotopeaRenderer();
         photopeaStatus.textContent = photopeaDocumentReady
-            ? "Updating the Photopea preview…"
+            ? "Updating the Lyrics preview…"
             : "Loading your Photopea template…";
         clearTimeout(photopeaRenderTimer);
         photopeaRenderTimer = setTimeout(sendPhotopeaRender, 350);
@@ -1029,7 +1029,7 @@
         if (photopeaPreviewUrl) URL.revokeObjectURL(photopeaPreviewUrl);
         photopeaPreviewUrl = URL.createObjectURL(photopeaPreviewBlob);
         updateLivePreview();
-        photopeaStatus.textContent = "Photopea preview is ready.";
+        photopeaStatus.textContent = "Lyrics Ready.";
     }
 
     async function sendPendingPhotopeaOutputs() {
