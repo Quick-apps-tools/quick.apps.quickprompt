@@ -37,5 +37,16 @@
         "image": "events/lyrics/pwd-day-nagpupuri-sa-yo-eca59bc2-7.jpg"
       }
     ]
+  },
+  {
+    "id": "f6dea2ed-13c1-45ce-ae8a-773220166478",
+    "title": "MASS BAPTISM",
+    "poster": "events/posters/mass-baptism-f6dea2ed-13c.jpg",
+    "songs": [
+      {
+        "title": "HIMNO 36",
+        "image": "events/lyrics/mass-baptism-himno-36-f6dea2ed-0.jpg"
+      }
+    ]
   }
 ]
